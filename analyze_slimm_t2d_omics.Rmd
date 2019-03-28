@@ -321,14 +321,30 @@ setwd("..")
 We plot the top pathways shown in the paper. The t-statistics from above have sufficiently many degrees of freedom to be approximately z-scores, which are better known, so we annotate them as z-scores.
 
 ```{r plot_pants_pwys}
-setwd("output")
+setwd("./output")
 fs <- read.csv("deltadelta_t.csv", row.names = 1)
-ps <- read.csv("absdeltadelta_stats_nperm50000_pants.csv", row.names = 1)
 #net plots
 fs.t <- setNames(fs$RYGBvsDWM.t, nm=rownames(fs))
 plot_pwy(gr=gr, ker=ker, Gmat=smpdb_gmat, pwy="Beta-Alanine Metabolism", annot=chebi.map, ntop=10, zscore.v=fs.t, seed=4)
 # i used ntop=6 for 1st submission
 plot_pwy(gr=gr, ker=ker, Gmat=smpdb_gmat, pwy="Phospholipid Biosynthesis", annot=chebi.map, ntop=6, zscore.v=fs.t, seed=4)
+setwd("..")
+```
+
+```{r pants_barplot}
+setwd("./output")
+#no rownames for ggplot2
+pwys <- read.csv("absdeltadelta_stats_nperm50000_pants.csv")
+colnames(pwys)[1] <- "pwy.nm"
+pwys$nlog10pv <- -log10(pwys$p)
+pwys.ss <- pwys[pwys$FDR < 0.01,]
+pwys.ss$pwy.nm <- factor(pwys.ss$pwy.nm, levels=rev(pwys.ss$pwy.nm), ordered=TRUE)
+
+ggp <- ggplot(data=pwys.ss, mapping=aes(x=pwy.nm, y=nlog10pv, fill=FDR)) + geom_col() + xlab("Pathway") + theme_bw() + 
+  ylab("-log10(p-value)") + coord_flip() + theme(legend.title = element_text(size = 16), legend.text = element_text(size = 16),
+                                                 axis.title.x=element_text(size=16), axis.text.x=element_text(size=12),
+                                                 axis.text.y=element_text(size=20), axis.title.y = element_blank())
+ggsave("pwy_sig_barplot.pdf", ggp, width=11, height=8.5)
 setwd("..")
 ```
 
@@ -366,7 +382,7 @@ setwd("..")
 
 # Session info
 
-```{r, include=TRUE}
+```{r sessioninfo, include=TRUE}
 devtools::session_info()
 ```
 
