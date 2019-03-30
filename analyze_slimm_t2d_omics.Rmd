@@ -106,13 +106,13 @@ soma.bmi.diff.stats <- limma_contrasts(diff.soma.mat, design = des.diff.bmi[coln
 
 soma.tab <- data.frame(soma.stats[rownames(soma.diff.stats), avg.cols], soma.diff.stats, 
                        soma.bmi.diff.stats[rownames(soma.diff.stats),], soma.annot[rownames(soma.diff.stats),])
-write.csv(df_signif(soma.tab), "output/soma_supp_table.csv")
+write.csv(df_signif(soma.tab), "results/soma_supp_table.csv")
 ```
 
-The Soma supp table with means per group per time point and statistics on differences between groups on differences from baseline is at [soma_supp_table.csv](./output/soma_supp_table.csv). 
+The Soma supp table with means per group per time point and statistics on differences between groups on differences from baseline is at [soma_supp_table.csv](./results/soma_supp_table.csv). 
 
 ```{r soma_venns}
-setwd("./output")
+setwd("./results")
 pref.lst <- list(diff=names(contr.v1)[-1], diff_bmi=names(contr.bmi))
 soma.venn <- multi_venn(soma.tab, prefix.lst = pref.lst, fdr.cutoff = 0.05, name="soma_FDR05")
 soma.sig <- rownames(soma.venn)[rowSums(abs(soma.venn)) > 0]
@@ -130,10 +130,10 @@ setwd("..")
 
 ```{r somaheat}
 heat.mat <- data.matrix(soma.stats[soma.sig.nobmi, grep("logFC$", colnames(soma.stats))])
-write.csv(signif(heat.mat, 3), "output/soma_heat.csv")
+write.csv(signif(heat.mat, 3), "results/soma_heat.csv")
 ```
 
-A table representing a Venn diagram of proteomics using FDR = 0.05 is at  [soma_FDR05_venn.csv](./output/soma_FDR05_venn.csv). A table representing a heatmap of the logFC of each of the proteins that ever has FDR < 0.05 without BMI adjustment over time is at [soma_heat.csv](./output/soma_heat.csv).
+A table representing a Venn diagram of proteomics using FDR = 0.05 is at  [soma_FDR05_venn.csv](./results/soma_FDR05_venn.csv). A table representing a heatmap of the logFC of each of the proteins that ever has FDR < 0.05 without BMI adjustment over time is at [soma_heat.csv](./results/soma_heat.csv).
 
 ## Metabolome
 
@@ -148,13 +148,13 @@ met.bmi.diff.stats <- signif(limma_contrasts(diff.met.mat, design = des.met.diff
 avg.cols <- intersect(avg.grps, grep("avg$", colnames(met.stats), value = TRUE))
 met.tab <- data.frame(met.stats[rownames(met.diff.stats), avg.cols], met.diff.stats, 
                       met.bmi.diff.stats[rownames(met.diff.stats),], met.annot[rownames(met.diff.stats),])
-write.csv(df_signif(met.tab), "./output/met_supp_table.csv", na="")
+write.csv(df_signif(met.tab), "./results/met_supp_table.csv", na="")
 ```
 
-Analyze differences between groups at each time point, and these differences after taking each person's difference from baseline. The met supp table with means per group per time point and statistics on differences between groups on differences from baseline is at [met_supp_table.csv](./output/met_supp_table.csv).
+Analyze differences between groups at each time point, and these differences after taking each person's difference from baseline. The met supp table with means per group per time point and statistics on differences between groups on differences from baseline is at [met_supp_table.csv](./results/met_supp_table.csv).
 
 ```{r met_venns}
-setwd("./output")
+setwd("./results")
 pref.lst <- list(diff=names(contr.v1)[-c(1, 4)], diff_bmi=names(contr.bmi[-3]))
 met.venn <- multi_venn(met.tab, prefix.lst = pref.lst, fdr.cutoff = 0.05, name="met_FDR05")
 met.sig <- rownames(met.venn)[rowSums(abs(met.venn)) > 0]
@@ -172,14 +172,14 @@ setwd("..")
 
 ```{r mheat}
 heat.mat <- data.matrix(met.stats[met.sig.nobmi, grep("logFC$", colnames(met.stats))])
-write.csv(signif(heat.mat, 3), "./output/met_heat.csv")
+write.csv(signif(heat.mat, 3), "./results/met_heat.csv")
 ```
 
-A table representing a Venn diagram of metabolomics using FDR = 0.05 is at  [met_FDR05_venn.csv](./output/met_FDR05_venn.csv). A table representing a heatmap of the logFC of each of the metabolites that ever has FDR < 0.05 without BMI adjustment over time is at [met_heat.csv](./output/met_heat.csv).
+A table representing a Venn diagram of metabolomics using FDR = 0.05 is at  [met_FDR05_venn.csv](./results/met_FDR05_venn.csv). A table representing a heatmap of the logFC of each of the metabolites that ever has FDR < 0.05 without BMI adjustment over time is at [met_heat.csv](./results/met_heat.csv).
 
 # Hitman
 
-We apply Hitman to 12mo outcome change from baseline using change at 3mo from baseline as mediators and arm as exposure. The results of these mediation tests are written as CSVs to [output](./output/) folder using the naming convention outcome-timepoint_vs_mediator-timepoint_hitman, such as "HbA1c12_vs_soma3_hitman.csv," whose *EMY* columns hold the overall p-values and FDRs.
+We apply Hitman to 12mo outcome change from baseline using change at 3mo from baseline as mediators and arm as exposure. The results of these mediation tests are written as CSVs to [results](./results/) folder using the naming convention outcome-timepoint_vs_mediator-timepoint_hitman, such as "HbA1c12_vs_soma3_hitman.csv," whose *EMY* columns hold the overall p-values and FDRs.
 
 ## HbA1c
 
@@ -192,13 +192,13 @@ hm.soma <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="DWM"),
                   M=diff.soma.mat[,paste0(nms.tmp, "_3")], 
                   Y=diff.pheno12[nms.tmp, "HbA1c"])
 hm.a1c.soma.df <- data.frame(signif(hm.soma, 3), soma.annot[rownames(hm.soma),])
-write.csv(hm.a1c.soma.df, "./output/HbA1c12_vs_soma3_hitman.csv")
+write.csv(hm.a1c.soma.df, "./results/HbA1c12_vs_soma3_hitman.csv")
 #met
 nms.tmp <- intersect(gsub("_3$", "", grep("_3$", colnames(diff.met.mat), value=TRUE)), rownames(diff.pheno12))
 hm.met <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="DWM"), M=diff.met.mat[,paste0(nms.tmp, "_3")], 
                   Y=diff.pheno12[nms.tmp, "HbA1c"])
 hm.a1c.met.df <- data.frame(signif(hm.met, 3), met.annot[rownames(hm.met),])
-write.csv(hm.a1c.met.df, "./output/HbA1c12_vs_met3_hitman.csv")
+write.csv(hm.a1c.met.df, "./results/HbA1c12_vs_met3_hitman.csv")
 #clinical
 #remove: arm & grp not a difference; creatinine not measured at 3mo; weight already incorporated in BMI
 rm.cols <- c("arm", "grp", "Weight", grep("Creatinine", colnames(diff.pheno3), value=TRUE))
@@ -208,8 +208,8 @@ diff.pheno3 <- diff.pheno3[intersect(rownames(diff.pheno3), rownames(diff.pheno1
 #diff.pheno3 has TOPAZ, but TOPAZ has all NAs at 12mo
 arm.v <- setNames(as.numeric(pheno[paste0(rownames(diff.pheno3), "_0"), "arm"]=="RYGB"), nm=rownames(diff.pheno3))
 HbA1c <- setNames(diff.pheno12[rownames(diff.pheno3), "HbA1c"], nm=rownames(diff.pheno3))
-clin3.hm <- hitman(E=arm.v, M=t(diff.pheno3), Y=HbA1c)
-write.csv(signif(clin3.hm, 3), "./output/HbA1c12_vs_clin3_hitman.csv", na="")
+clin3.hm <- lotman(E=arm.v, M=t(diff.pheno3), Y=HbA1c)
+write.csv(signif(clin3.hm, 3), "./results/HbA1c12_vs_clin3_lotman.csv", na="")
 ```
 
 ## HOMA-IR
@@ -224,14 +224,14 @@ hm.soma <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="DWM"),
                   M=diff.soma.mat[,paste0(nms.tmp, "_3")], 
                   Y=diff.pheno12[nms.tmp, "homair"])
 hm.soma.df <- data.frame(signif(hm.soma, 3), soma.annot[rownames(hm.soma),])
-write.csv(hm.soma.df, paste0("./output/homair12_vs_soma3_hitman.csv"))
+write.csv(hm.soma.df, paste0("./results/homair12_vs_soma3_hitman.csv"))
 #met
 nms.tmp <- intersect(gsub("_3$", "", grep("_3$", colnames(diff.met.mat), value=TRUE)),
                      rownames(diff.pheno12)[!is.na(diff.pheno12$homair)])
 hm.met <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="DWM"), M=diff.met.mat[,paste0(nms.tmp, "_3")], 
                   Y=diff.pheno12[nms.tmp, "homair"])
 hm.met.df <- data.frame(signif(hm.met, 3), met.annot[rownames(hm.met),])
-write.csv(hm.met.df, paste0("./output/homair12_vs_met3_hitman.csv"))
+write.csv(hm.met.df, paste0("./results/homair12_vs_met3_hitman.csv"))
 ```
 
 ## dins030
@@ -246,14 +246,14 @@ hm.soma <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="DWM"),
                   M=diff.soma.mat[,paste0(nms.tmp, "_3")], 
                   Y=diff.pheno12[nms.tmp, "dins030"])
 hm.soma.df <- data.frame(signif(hm.soma, 3), soma.annot[rownames(hm.soma),])
-write.csv(hm.soma.df, paste0("./output/dins030_12_vs_soma3_hitman.csv"))
+write.csv(hm.soma.df, paste0("./results/dins030_12_vs_soma3_hitman.csv"))
 #met
 nms.tmp <- intersect(gsub("_3$", "", grep("_3$", colnames(diff.met.mat), value=TRUE)),
                      rownames(diff.pheno12)[!is.na(diff.pheno12$dins030)])
 hm.met <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="DWM"), M=diff.met.mat[,paste0(nms.tmp, "_3")], 
                   Y=diff.pheno12[nms.tmp, "dins030"])
 hm.met.df <- data.frame(signif(hm.met, 3), met.annot[rownames(hm.met),])
-write.csv(hm.met.df, paste0("./output/dins030_12_vs_met3_hitman.csv"))
+write.csv(hm.met.df, paste0("./results/dins030_12_vs_met3_hitman.csv"))
 ```
 
 # Pants
@@ -281,7 +281,7 @@ For input data to Pants, differences from baseline are combined for people who h
 
 ## Pants between-group
 
-We write the z-score for the between-arm comparison of each analyte's 3 month difference from baseline from `ezlimma::limma_contrasts` to use in output.
+We write the z-score for the between-arm comparison of each analyte's 3 month difference from baseline from `ezlimma::limma_contrasts` to use in results.
 
 ```{r deltas}
 # diff_mat file created in gb_ww_net_integration
@@ -295,14 +295,14 @@ score_fcn <- abs
 #feature (analyte) stats from ezlimma
 fs <- limma_contrasts(diff.mat3, grp=grp.v, contrast.v = c(RYGBvsDWM="RYGB-DWM"), cols=c("t", "P.Value", "adj.P.Val"))
 fs.df <- data.frame(signif(fs, 4), CHEBI=chebi.map[rownames(fs)])
-write.csv(fs.df, "output/deltadelta_t.csv")
+write.csv(fs.df, "results/deltadelta_t.csv")
 ```
 
 We executed the chunk below on 2019-02-17 on a Linux cluster parallelized over 20 cores, and it took only several minutes. Here we execute it on a Windows machine with 8 cores with less RAM, which takes much longer. You can see how many cores you have available with `parallel::detectCores()`.
 
 ```{r pants, eval=FALSE}
 # read in objects with prepare_pants_on_o2.Rmd
-setwd("./output")
+setwd("./results")
 fs <- read.csv("deltadelta_t.csv", row.names = 1)
 nperm <- 5*10**4
 nm <- "absdeltadelta_stats_nperm50000"
@@ -321,7 +321,7 @@ setwd("..")
 We plot the top pathways shown in the paper. The t-statistics from above have sufficiently many degrees of freedom to be approximately z-scores, which are better known, so we annotate them as z-scores.
 
 ```{r plot_pants_pwys}
-setwd("./output")
+setwd("./results")
 fs <- read.csv("deltadelta_t.csv", row.names = 1)
 #net plots
 fs.t <- setNames(fs$RYGBvsDWM.t, nm=rownames(fs))
@@ -332,7 +332,7 @@ setwd("..")
 ```
 
 ```{r pants_barplot}
-setwd("./output")
+setwd("./results")
 #no rownames for ggplot2
 pwys <- read.csv("absdeltadelta_stats_nperm50000_pants.csv")
 colnames(pwys)[1] <- "pwy.nm"
@@ -358,13 +358,13 @@ hm <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="DWM"),
              M=diff.mat3[,nms.tmp], 
              Y=diff.pheno12[nms.tmp, "homair"])
 hm.df <- data.frame(signif(hm, 3), CHEBI=chebi.map[rownames(hm)])
-write.csv(hm.df, "output/homair12_vs_analytes3_hitman_stats.csv")
+write.csv(hm.df, "results/homair12_vs_analytes3_hitman_stats.csv")
 ```
 
 We write the hitman results for each analyte's 3mo change from baseline as a mediator of 12mo HOMA-IR change.
 
 ```{r ph.homair, eval=FALSE}
-setwd("output")
+setwd("results")
 hm.df <- read.csv("homair12_vs_analytes3_hitman_stats.csv", row.names = 1)
 diff.nms <- intersect(rownames(diff.pheno12)[!is.na(diff.pheno12$homair)], colnames(diff.mat3))
 exposure.v <- as.numeric(diff.pheno12[diff.nms, "arm"] == "DWM")
