@@ -1,0 +1,60 @@
+---
+title: Write SLIMM-T2D trial supp table 2
+date: "`r Sys.Date()`"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, include=FALSE)
+options(digits=3, stringsAsFactors=FALSE)
+library(ezlimma)
+library(readxl)
+library(writexl)
+```
+
+## Summary
+Write table S2 from tables written in analyze_slimm_t2d_omics.Rmd and README to [Table_S2.xlsx](./results/Table_S2.xlsx).
+
+```{r read}
+# writexl doesn't like rownames
+setwd("./results")
+readme <- read.csv("../data/S2_readme.csv")
+soma <- read.csv("soma_supp_table.csv")
+met <- read.csv("met_supp_table.csv")
+soma.met.cor <- read.csv("soma_met_corr_coeffs.csv")
+pants.by.grp <- ezlimma::read_linked_xl("absdeltadelta_stats_nperm50000_pants/absdeltadelta_stats_nperm50000_pants.xlsx")
+
+hm.soma.HbA1c <- read.csv("HbA1c12_vs_soma3_hitman.csv")
+hm.met.HbA1c <- read.csv("HbA1c12_vs_met3_hitman.csv")
+lm.clin3.HbA1c <- read.csv("HbA1c12_vs_clin3_lotman.csv")
+
+hm.soma.dins030 <- read.csv("dins030_12_vs_soma3_hitman.csv")
+hm.met.dins030 <- read.csv("dins030_12_vs_met3_hitman.csv")
+
+hm.soma.homair <- read.csv("homair12_vs_soma3_hitman.csv")
+hm.met.homair <- read.csv("homair12_vs_met3_hitman.csv")
+
+pa.hm.homair <- ezlimma::read_linked_xl("homair_stats_nperm50000_pants_hitman/homair_stats_nperm50000_pants_hitman.xlsx")
+pa.hm.homair <- data.frame(X=rownames(pa.hm.homair), pa.hm.homair)
+setwd("..")
+```
+
+```{r combine}
+xx <- list(README=readme, SOMAscan=soma, Metabolites=met, soma_met_r=soma.met.cor, Pants_between_arm=pants.by.grp, 
+           Hitman_soma_HbA1c=hm.soma.HbA1c, Hitman_met_HbA1c=hm.met.HbA1c, Lotman_clin_HbA1c=lm.clin3.HbA1c, 
+           Hitman_soma_dins030=hm.soma.dins030, Hitman_met_dins030=hm.met.dins030, 
+           Hitman_soma_homair=hm.soma.homair, Hitman_met_homair=hm.met.homair, Hitman_Pants_homair=pa.hm.homair)
+#get rid of X in top-left corner
+xx[-1] <- lapply(xx[-1], FUN = function(xx.tmp){
+   colnames(xx.tmp)[1] <- ""
+   xx.tmp
+})
+```
+
+```{r wr}
+#xlsx generates errors due to memory
+writexl::write_xlsx(x=xx, path="results/Table_S2.xlsx")
+```
+
+## Post-Knit
+Color soma_met_r

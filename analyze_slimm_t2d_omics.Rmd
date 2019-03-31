@@ -19,6 +19,7 @@ library(zeallot)
 library(limma)
 library(ezlimma)
 library(ezlimmaplot) #only use ezvenn
+library(ezlimmautils)
 library(PANTS)
 ```
 
@@ -177,13 +178,13 @@ write.csv(signif(heat.mat, 3), "./results/met_heat.csv")
 
 A table representing a Venn diagram of metabolomics using FDR = 0.05 is at  [met_FDR05_venn.csv](./results/met_FDR05_venn.csv). A table representing a heatmap of the logFC of each of the metabolites that ever has FDR < 0.05 without BMI adjustment over time is at [met_heat.csv](./results/met_heat.csv).
 
-# Hitman
+# Hitman/Lotman
 
-We apply Hitman to 12mo outcome change from baseline using change at 3mo from baseline as mediators and arm as exposure. The results of these mediation tests are written as CSVs to [results](./results/) folder using the naming convention outcome-timepoint_vs_mediator-timepoint_hitman, such as "HbA1c12_vs_soma3_hitman.csv," whose *EMY* columns hold the overall p-values and FDRs.
+We apply Hitman/Lotman to 12mo outcome change from baseline using change at 3mo from baseline as mediators and arm as exposure. The results of these mediation tests are written as CSVs to [results](./results/) folder using the naming convention outcome-timepoint_vs_mediator-timepoint_hitman, such as "HbA1c12_vs_soma3_hitman.csv," whose *EMY* columns hold the overall p-values and FDRs.
 
 ## HbA1c
 
-We apply Hitman to 12mo HbA1c change using change at 3mo from baseline in analytes and clinical parameters as mediators.
+We apply Hitman/Lotman to 12mo HbA1c change using change at 3mo from baseline in analytes and clinical parameters as mediators.
 
 ```{r hm_a1c_3}
 #soma
@@ -208,9 +209,27 @@ diff.pheno3 <- diff.pheno3[intersect(rownames(diff.pheno3), rownames(diff.pheno1
 #diff.pheno3 has TOPAZ, but TOPAZ has all NAs at 12mo
 arm.v <- setNames(as.numeric(pheno[paste0(rownames(diff.pheno3), "_0"), "arm"]=="RYGB"), nm=rownames(diff.pheno3))
 HbA1c <- setNames(diff.pheno12[rownames(diff.pheno3), "HbA1c"], nm=rownames(diff.pheno3))
-clin3.hm <- lotman(E=arm.v, M=t(diff.pheno3), Y=HbA1c)
-write.csv(signif(clin3.hm, 3), "./results/HbA1c12_vs_clin3_lotman.csv", na="")
+clin3.lm <- lotman(E=arm.v, M=t(diff.pheno3), Y=HbA1c)
+write.csv(signif(clin3.lm, 3), "./results/HbA1c12_vs_clin3_lotman.csv", na="")
 ```
+
+### Compare clinical vs analytes
+
+```{r}
+hm.a1c.soma.df.ss <- hm.a1c.soma.df[hm.a1c.soma.df$EMY.p < clin3.lm[1, "EMY.p"] & 
+                                      hm.a1c.soma.df$EMY.FDR < clin3.lm[1, "EMY.FDR"],]
+pr <- rownames(hm.a1c.soma.df.ss)
+hm.soma.top <- data.frame(probe=pr, ratio3=fc2ratio(soma.stats[pr, "RYGBvsDWMat3mo.FC"]),
+                          nm=hm.a1c.soma.df.ss$TargetFullName, 
+                          EntrezGeneSymbol=hm.a1c.soma.df.ss$EntrezGeneSymbol)
+
+hm.a1c.met.df.ss <- hm.a1c.met.df[hm.a1c.met.df$EMY.p < clin3.lm[1, "EMY.p"] & 
+                                      hm.a1c.met.df$EMY.FDR < clin3.lm[1, "EMY.FDR"],]
+```
+
+The protein analytes more significant in p-value & FDR than any clinical mediator are: `r kable(hm.soma.top)`.
+
+The metabolite mediators are `r hm.a1c.met.df.ss$BIOCHEMICAL`
 
 ## HOMA-IR
 
@@ -254,6 +273,45 @@ hm.met <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="DWM"), M=diff.met.m
                   Y=diff.pheno12[nms.tmp, "dins030"])
 hm.met.df <- data.frame(signif(hm.met, 3), met.annot[rownames(hm.met),])
 write.csv(hm.met.df, paste0("./results/dins030_12_vs_met3_hitman.csv"))
+```
+
+# Correlate soma vs. met
+
+We correlate top somalogic proteins with top metabolites.
+
+```{r corsm}
+nms.tmp <- intersect(grep("_3$", colnames(diff.soma.mat), value=TRUE),
+                     grep("_3$", colnames(diff.met.mat), value=TRUE))
+
+mv <- read.csv("results/met_FDR05_venn.csv", row.names = 1)
+top.met <- rownames(mv)
+sv <- read.csv("results/soma_FDR05_venn.csv", row.names = 1)
+top.soma <- rownames(sv)
+
+diff.soma.mat3.ss <- data.matrix(diff.soma.mat[top.soma, nms.tmp])
+rownames(diff.soma.mat3.ss) <- soma.annot[rownames(diff.soma.mat3.ss), "EntrezGeneSymbol"]
+diff.soma.mat3.ss <- diff.soma.mat3.ss[!duplicated(rownames(diff.soma.mat3.ss)),]
+
+diff.met.mat3.ss <- data.matrix(diff.met.mat[top.met, nms.tmp])
+rownames(diff.met.mat3.ss) <- met.annot[rownames(diff.met.mat3.ss), "BIOCHEMICAL"]
+```
+
+```{r build_corr_mat}
+dimnms <- list(rownames(diff.soma.mat3.ss), rownames(diff.met.mat3.ss), c("r", "p", "FDR"))
+cor.array <- array(data=NA, dim = sapply(dimnms, length), dimnames=dimnms)
+for (soma.row in rownames(diff.soma.mat3.ss)){
+  for (met.row in rownames(diff.met.mat3.ss)){
+    ct <- cor.test(x=diff.soma.mat3.ss[soma.row,], y=diff.met.mat3.ss[met.row,])
+    cor.array[soma.row, met.row, "r"] <- ct$estimate
+    cor.array[soma.row, met.row, "p"] <- ct$p.value
+  }
+}
+cor.array[,, "FDR"] <- p.adjust(cor.array[,, "p"], method = "BH")
+
+cor.r <- signif(cor.array[,,"r"], 3)
+cor.r.out <- cbind(cor.r, NA, "NOTE: p=0.05 corresponds to |r|=0.33 & FDR=0.26"=NA)
+rownames(cor.r.out)[(nrow(cor.r.out)-1)] <- NA
+write.csv(t(cor.r.out), "results/soma_met_corr_coeffs.csv")
 ```
 
 # Pants
@@ -432,4 +490,13 @@ stopifnot(paste0(rownames(diff.pheno12), "_3") %in% rownames(diff.pheno))
 
 stopifnot(sum(smpdb_gmat["CHEBI:37373",])==1)
 stopifnot("CHEBI:37373" %in% rownames(diff.mat3))
+
+# cor soma vs met
+stopifnot(order(-abs(as.numeric(cor.array[,,"r"]))) == order(as.numeric(cor.array[,, "p"])))
+stopifnot(cor.r["OMD", "pro-hydroxy-pro"] == 0.521)
+
+# signif(cor.array[,,"p"][wm], 3)
+wm <- which.min(abs(cor.array[,,"p"]-0.05))
+stopifnot(signif(abs(cor.array[,,"r"][wm]), 2) == 0.33)
+stopifnot(signif(cor.array[,,"FDR"][wm], 2) == 0.26)
 ```
