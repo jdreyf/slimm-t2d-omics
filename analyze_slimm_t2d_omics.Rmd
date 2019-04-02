@@ -114,27 +114,14 @@ The Soma supp table with means per group per time point and statistics on differ
 
 ```{r soma_venns}
 setwd("./results")
-pref.lst <- list(diff=names(contr.v1)[-1], diff_bmi=names(contr.bmi))
-soma.venn <- multi_venn(soma.tab, prefix.lst = pref.lst, fdr.cutoff = 0.05, name="soma_FDR05")
+soma.venn <- ezvenn(soma.tab, prefix.v = names(contr.v1)[-1], fdr.cutoff = 0.05, name="soma_FDR05", plot = FALSE)
 soma.sig <- rownames(soma.venn)[rowSums(abs(soma.venn)) > 0]
-soma.venn.df <- data.frame(soma.venn[soma.sig,], soma.annot[soma.sig,])
+soma.venn.df <- data.frame(soma.venn[soma.sig,], soma.annot[soma.sig, 1:7])
 write.csv(soma.venn.df, "soma_FDR05_venn.csv")
-
-soma.venn.nobmi <- soma.venn[,paste0(pref.lst$diff, ".sig")]
-soma.sig.nobmi <- rownames(soma.venn.nobmi)[rowSums(abs(soma.venn.nobmi)) > 0]
-soma.sig.nobmi.all <- soma.annot[rownames(soma.venn.nobmi)[rowSums(abs(soma.venn.nobmi)) == 4], "EntrezGeneSymbol"]
-
-soma.venn.bmi <- soma.venn[,paste0(pref.lst$diff_bmi, ".sig")]
-soma.sig.bmi.all <- soma.annot[rownames(soma.venn.bmi)[rowSums(abs(soma.venn.bmi)) == 4], "EntrezGeneSymbol"]
 setwd("..")
 ```
 
-```{r somaheat}
-heat.mat <- data.matrix(soma.stats[soma.sig.nobmi, grep("logFC$", colnames(soma.stats))])
-write.csv(signif(heat.mat, 3), "results/soma_heat.csv")
-```
-
-A table representing a Venn diagram of proteomics using FDR = 0.05 is at  [soma_FDR05_venn.csv](./results/soma_FDR05_venn.csv). A table representing a heatmap of the logFC of each of the proteins that ever has FDR < 0.05 without BMI adjustment over time is at [soma_heat.csv](./results/soma_heat.csv).
+A table representing a Venn diagram of proteomics using FDR = 0.05 is at  [soma_FDR05_venn.csv](./results/soma_FDR05_venn.csv).
 
 ## Metabolome
 
@@ -156,27 +143,14 @@ Analyze differences between groups at each time point, and these differences aft
 
 ```{r met_venns}
 setwd("./results")
-pref.lst <- list(diff=names(contr.v1)[-c(1, 4)], diff_bmi=names(contr.bmi[-3]))
-met.venn <- multi_venn(met.tab, prefix.lst = pref.lst, fdr.cutoff = 0.05, name="met_FDR05")
+met.venn <- ezvenn(met.tab, prefix.v = names(contr.v1)[-c(1, 4)], fdr.cutoff = 0.05, name="met_FDR05", plot = FALSE)
 met.sig <- rownames(met.venn)[rowSums(abs(met.venn)) > 0]
 met.venn.df <- data.frame(met.venn[met.sig,], met.annot[met.sig,])
 write.csv(met.venn.df, "met_FDR05_venn.csv")
-
-met.venn.nobmi <- met.venn[,paste0(pref.lst$diff, ".sig")]
-met.sig.nobmi <- rownames(met.venn.nobmi)[rowSums(abs(met.venn.nobmi)) > 0]
-met.sig.nobmi.all <- met.annot[rownames(met.venn.nobmi)[rowSums(abs(met.venn.nobmi)) == 4], "BIOCHEMICAL"]
-
-met.venn.bmi <- met.venn[,paste0(pref.lst$diff_bmi, ".sig")]
-met.sig.bmi.all <- met.annot[rownames(met.venn.bmi)[rowSums(abs(met.venn.bmi)) == 4], "BIOCHEMICAL"]
 setwd("..")
 ```
 
-```{r mheat}
-heat.mat <- data.matrix(met.stats[met.sig.nobmi, grep("logFC$", colnames(met.stats))])
-write.csv(signif(heat.mat, 3), "./results/met_heat.csv")
-```
-
-A table representing a Venn diagram of metabolomics using FDR = 0.05 is at  [met_FDR05_venn.csv](./results/met_FDR05_venn.csv). A table representing a heatmap of the logFC of each of the metabolites that ever has FDR < 0.05 without BMI adjustment over time is at [met_heat.csv](./results/met_heat.csv).
+A table representing a Venn diagram of metabolomics using FDR = 0.05 is at  [met_FDR05_venn.csv](./results/met_FDR05_venn.csv).
 
 # Hitman/Lotman
 

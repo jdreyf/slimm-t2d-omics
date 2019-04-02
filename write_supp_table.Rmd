@@ -20,7 +20,9 @@ Write table S2 from tables written in analyze_slimm_t2d_omics.Rmd and README to 
 setwd("./results")
 readme <- read.csv("../data/S2_readme.csv")
 soma <- read.csv("soma_supp_table.csv")
+soma.venn <- read.csv("soma_FDR05_venn.csv")
 met <- read.csv("met_supp_table.csv")
+met.venn <- read.csv("met_FDR05_venn.csv")
 soma.met.cor <- read.csv("soma_met_corr_coeffs.csv")
 pants.by.grp <- ezlimma::read_linked_xl("absdeltadelta_stats_nperm50000_pants/absdeltadelta_stats_nperm50000_pants.xlsx")
 
@@ -40,7 +42,8 @@ setwd("..")
 ```
 
 ```{r combine}
-xx <- list(README=readme, SOMAscan=soma, Metabolites=met, soma_met_r=soma.met.cor, Pants_between_arm=pants.by.grp, 
+xx <- list(README=readme, SOMAscan=soma, Soma_sig=soma.venn, Metabolites=met, Met_sig=met.venn,
+           Soma_met_r=soma.met.cor, Pants_between_arm=pants.by.grp, 
            Hitman_soma_HbA1c=hm.soma.HbA1c, Hitman_met_HbA1c=hm.met.HbA1c, Lotman_clin_HbA1c=lm.clin3.HbA1c, 
            Hitman_soma_dins030=hm.soma.dins030, Hitman_met_dins030=hm.met.dins030, 
            Hitman_soma_homair=hm.soma.homair, Hitman_met_homair=hm.met.homair, Hitman_Pants_homair=pa.hm.homair)
