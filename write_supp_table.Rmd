@@ -21,10 +21,16 @@ setwd("./results")
 readme <- read.csv("../data/S2_readme.csv")
 soma <- read.csv("soma_supp_table.csv")
 soma.venn <- read.csv("soma_FDR05_venn.csv")
+soma.dmcure <- read.csv("soma_dmcure_table.csv")
+
 met <- read.csv("met_supp_table.csv")
 met.venn <- read.csv("met_FDR05_venn.csv")
+met.dmcure <- read.csv("met_dmcure_table.csv")
+
 soma.met.cor <- read.csv("soma_met_corr_coeffs.csv")
+
 pants.by.grp <- ezlimma::read_linked_xl("absdeltadelta_stats_nperm50000_pants/absdeltadelta_stats_nperm50000_pants.xlsx")
+pants.by.grp <- data.frame(X=rownames(pants.by.grp), pants.by.grp)
 
 hm.soma.HbA1c <- read.csv("HbA1c12_vs_soma3_hitman.csv")
 hm.met.HbA1c <- read.csv("HbA1c12_vs_met3_hitman.csv")
@@ -42,7 +48,9 @@ setwd("..")
 ```
 
 ```{r combine}
-xx <- list(README=readme, SOMAscan=soma, Soma_sig=soma.venn, Metabolites=met, Met_sig=met.venn,
+xx <- list(README=readme, 
+           SOMAscan=soma, Soma_sig=soma.venn, Soma_dmcure=soma.dmcure,
+           Metabolites=met, Met_sig=met.venn, Met_dmcure=met.dmcure,
            Soma_met_r=soma.met.cor, Pants_between_arm=pants.by.grp, 
            Hitman_soma_HbA1c=hm.soma.HbA1c, Hitman_met_HbA1c=hm.met.HbA1c, Lotman_clin_HbA1c=lm.clin3.HbA1c, 
            Hitman_soma_dins030=hm.soma.dins030, Hitman_met_dins030=hm.met.dins030, 

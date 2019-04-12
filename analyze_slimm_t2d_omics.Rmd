@@ -152,6 +152,46 @@ setwd("..")
 
 A table representing a Venn diagram of metabolomics using FDR = 0.05 is at  [met_FDR05_venn.csv](./results/met_FDR05_venn.csv).
 
+# Differential abundance remission at 3 years within RYGB
+
+Analyze each person's analyte difference from baseline at 3mo between those who achieved glycemic endpoints (coded as *dmcure*) at 36mo and those who did not within RYGB.
+
+```{r dmcure}
+diff.pheno36 <- diff.pheno[grep("_36$", rownames(diff.pheno)),]
+# code 9 indicates NA
+diff.pheno36$dmcure[diff.pheno36$dmcure==9] <- NA
+diff.pheno36 <- diff.pheno36[!is.na(diff.pheno36$dmcure),]
+rownames(diff.pheno36) <- gsub("_36$", "", rownames(diff.pheno36))
+
+dp36.rygb <- diff.pheno36[diff.pheno36$arm=="RYGB",]
+dp36.rygb$dmcure.char <- ifelse(dp36.rygb$dmcure, "dmcure", "not_dmcure")
+contr.dmc <- c(dmcure_vs_not="dmcure-not_dmcure")
+```
+
+## Proteome
+
+```{r soma dmcure ezl}
+nms.tmp <- intersect(gsub("_3$", "", grep("_3$", colnames(diff.soma.mat), value=TRUE)), rownames(dp36.rygb))
+soma.dmc.stats <- limma_contrasts(diff.soma.mat[,paste0(nms.tmp, "_3")], grp=dp36.rygb[nms.tmp, "dmcure.char"], 
+                                  contrast.v = contr.dmc)
+soma.dmc.df <- data.frame(signif(soma.dmc.stats, 3), soma.annot[rownames(soma.dmc.stats),])
+write.csv(soma.dmc.df, "./results/soma_dmcure_table.csv")
+```
+
+The Soma table with statistics on differences in remission is at [soma_dmcure_table.csv](./results/soma_dmcure_table.csv). The minimum FDR is `r signif(min(soma.dmc.stats$dmcure.FDR), 3)`.
+
+## Metabolome
+
+```{r met dmcure ezl}
+nms.tmp <- intersect(gsub("_3$", "", grep("_3$", colnames(diff.met.mat), value=TRUE)), rownames(dp36.rygb))
+met.dmc.stats <- limma_contrasts(diff.met.mat[,paste0(nms.tmp, "_3")], grp=dp36.rygb[nms.tmp, "dmcure.char"], 
+                                  contrast.v = contr.dmc)
+met.dmc.df <- data.frame(signif(met.dmc.stats, 3), met.annot[rownames(met.dmc.stats),])
+write.csv(met.dmc.df, "./results/met_dmcure_table.csv")
+```
+
+The met table with statistics on differences is at [met_dmcure_table.csv](./results/met_dmcure_table.csv). The minimum FDR is `r signif(min(met.dmc.stats$dmcure.FDR), 3)`.
+
 # Hitman/Lotman
 
 We apply Hitman/Lotman to 12mo outcome change from baseline using change at 3mo from baseline as mediators and arm as exposure. The results of these mediation tests are written as CSVs to [results](./results/) folder using the naming convention outcome-timepoint_vs_mediator-timepoint_hitman, such as "HbA1c12_vs_soma3_hitman.csv," whose *EMY* columns hold the overall p-values and FDRs.
@@ -175,8 +215,8 @@ hm.met <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="DWM"), M=diff.met.m
 hm.a1c.met.df <- data.frame(signif(hm.met, 3), met.annot[rownames(hm.met),])
 write.csv(hm.a1c.met.df, "./results/HbA1c12_vs_met3_hitman.csv")
 #clinical
-#remove: arm & grp not a difference; creatinine not measured at 3mo; weight already incorporated in BMI
-rm.cols <- c("arm", "grp", "Weight", grep("Creatinine", colnames(diff.pheno3), value=TRUE))
+#remove: arm & grp not a difference; creatinine not measured at 3mo
+rm.cols <- c("arm", "grp", grep("Creatinine", colnames(diff.pheno3), value=TRUE))
 diff.pheno3 <- diff.pheno3[,setdiff(colnames(diff.pheno3), rm.cols)]
 rownames(diff.pheno3) <- gsub("_3$", "", rownames(diff.pheno3))
 diff.pheno3 <- diff.pheno3[intersect(rownames(diff.pheno3), rownames(diff.pheno12)),]
@@ -258,9 +298,9 @@ nms.tmp <- intersect(grep("_3$", colnames(diff.soma.mat), value=TRUE),
                      grep("_3$", colnames(diff.met.mat), value=TRUE))
 
 mv <- read.csv("results/met_FDR05_venn.csv", row.names = 1)
-top.met <- rownames(mv)
+top.met <- rownames(mv)[order(met.annot[rownames(mv), "BIOCHEMICAL"])]
 sv <- read.csv("results/soma_FDR05_venn.csv", row.names = 1)
-top.soma <- rownames(sv)
+top.soma <- rownames(sv)[order(soma.annot[rownames(sv), "EntrezGeneSymbol"])]
 
 diff.soma.mat3.ss <- data.matrix(diff.soma.mat[top.soma, nms.tmp])
 rownames(diff.soma.mat3.ss) <- soma.annot[rownames(diff.soma.mat3.ss), "EntrezGeneSymbol"]
@@ -283,8 +323,8 @@ for (soma.row in rownames(diff.soma.mat3.ss)){
 cor.array[,, "FDR"] <- p.adjust(cor.array[,, "p"], method = "BH")
 
 cor.r <- signif(cor.array[,,"r"], 3)
-cor.r.out <- cbind(cor.r, NA, "NOTE: p=0.05 corresponds to |r|=0.33 & FDR=0.26"=NA)
-rownames(cor.r.out)[(nrow(cor.r.out)-1)] <- NA
+cor.r.out <- cbind(cor.r, NA, "NOTE: p=0.05 corresponds to |r|=0.33 & FDR=0.24"=NA)
+colnames(cor.r.out)[(ncol(cor.r.out)-1)] <- NA
 write.csv(t(cor.r.out), "results/soma_met_corr_coeffs.csv")
 ```
 
@@ -462,15 +502,15 @@ stopifnot(soma.annot["SL005168", "EntrezGeneSymbol"]=="GHR",
 stopifnot(paste0(rownames(diff.pheno12), "_3") %in% colnames(diff.soma.mat))
 stopifnot(paste0(rownames(diff.pheno12), "_3") %in% rownames(diff.pheno))
 
-stopifnot(sum(smpdb_gmat["CHEBI:37373",])==1)
+stopifnot(sum(smpdb_gmat["CHEBI:37373",]) == 1)
 stopifnot("CHEBI:37373" %in% rownames(diff.mat3))
 
 # cor soma vs met
 stopifnot(order(-abs(as.numeric(cor.array[,,"r"]))) == order(as.numeric(cor.array[,, "p"])))
 stopifnot(cor.r["OMD", "pro-hydroxy-pro"] == 0.521)
-
 # signif(cor.array[,,"p"][wm], 3)
+stopifnot(ncol(cor.r) == 62)
 wm <- which.min(abs(cor.array[,,"p"]-0.05))
 stopifnot(signif(abs(cor.array[,,"r"][wm]), 2) == 0.33)
-stopifnot(signif(cor.array[,,"FDR"][wm], 2) == 0.26)
+stopifnot(signif(cor.array[,,"FDR"][wm], 2) == 0.24)
 ```
