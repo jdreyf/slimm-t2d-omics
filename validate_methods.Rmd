@@ -1,0 +1,43 @@
+---
+title: "Validations by simulation"
+date: "`r Sys.Date()`"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, include=FALSE)
+options(digits=3, stringsAsFactors=FALSE)
+library(ezlimma)
+```
+
+We validate the ability of each of our methods (`hitman`, `lotman`, and `pants`) to control their false positive rate (*size*) and have high rate of detecting true positives (*power*) via simulations, where we know the truth.
+
+# Mediation
+
+We simulate our mediation methods using the benchmark simulation from Barfield et al. (2017).
+
+## Lotman
+
+This calculation takes ~10 min on my desktop PC. Our simulation results are at [sim_lotman_nsamp50_nsim10000.csv](./results/sim_lotman_nsamp50_nsim10000.csv).
+
+```{r, eval=FALSE}
+prop.sig.mat <- ezlimma:::sim_barfield(med.fcn = lotman, b1t2.v=c(0, 0.14, 0.39), nsim = 10**4)
+write.csv(prop.sig.mat, "./results/sim_lotman_nsamp50_nsim10000.csv", na="")
+```
+
+## Hitman
+
+This calculation takes ~30 min on my desktop PC. Our simulation results are at [sim_hitman_nsamp50_nsim10000.csv](./results/sim_hitman_nsamp50_nsim10000.csv).
+
+```{r, eval=FALSE}
+prop.sig.mat <- ezlimma:::sim_barfield(med.fcn = hitman, b1t2.v=c(0, 0.14, 0.39), nsim = 10**4, ngene=99)
+write.csv(prop.sig.mat, "./results/sim_hitman_nsamp50_nsim10000.csv", na="")
+```
+
+# Pants
+
+
+
+# References
+Barfield R, Shen J, Just AC, Vokonas PS, Schwartz J, Baccarelli AA, VanderWeele TJ, Lin X. Testing for the indirect 
+effect under the null for genome-wide mediation analyses. Genet Epidemiol. 2017 Dec;41(8):824-833.

@@ -15,11 +15,12 @@ library(ggplot2)
 library(knitr)
 library(zeallot)
 
-# instructions to download these R packages are in README at: https://github.com/jdreyf/PANTS
+# instructions to install the latest version of these R packages are in README at: https://github.com/jdreyf/PANTS
+# however, to install version of PANTS used in this paper: 
+# remotes::install_github(repo="jdreyf/PANTS@v0.0.4.9001", build_opts = c("--no-resave-data", "--no-manual"))
 library(limma)
 library(ezlimma)
-library(ezlimmaplot) #only use ezvenn
-library(ezlimmautils)
+library(ezlimmaplot)
 library(PANTS)
 ```
 
