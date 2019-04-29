@@ -42,11 +42,11 @@ colnames(pheno) <- sub("Group", "arm",
 rownames(clin.names.map) <- clin.names.map$abbrev <- colnames(pheno)
 pheno$grp <- paste(pheno$arm, pheno$Mo, sep="_")
 
-soma.mat <- read.csv("data/soma_mat.csv", row.names=1)
+soma.mat <- read.csv("../slimm-t2d-omics-data/soma_mat.csv", row.names=1)
 diff.soma.mat <- make_diff_mat(soma.mat)
 soma.annot <- read.csv("data/soma_annot.csv", row.names = 1)
 
-met.mat <- read.csv("data/met_mat_norm.csv", row.names=1)
+met.mat <- read.csv("../slimm-t2d-omics-data/met_mat_norm.csv", row.names=1)
 diff.met.mat <- make_diff_mat(met.mat)
 met.annot <- read.csv("data/met_annot_with_chebi.csv", row.names = 1)
 ```
@@ -101,12 +101,13 @@ names(contr.bmi) <- paste0(names(contr.bmi), "_bmi")
 soma.stats <- limma_contrasts(soma.mat, grp=grp[colnames(soma.mat)], contr.v1)
 #order avg cols
 avg.cols <- intersect(avg.grps, grep("avg$", colnames(soma.stats), value = TRUE))
+t0.cols <- grep("^RYGBvsDWMat0mo", colnames(soma.stats), value = TRUE)
 
 soma.diff.stats <- limma_contrasts(diff.soma.mat, grp=grp[colnames(diff.soma.mat)], contr=contr.v1[-1], add.means = FALSE)
 soma.bmi.diff.stats <- limma_contrasts(diff.soma.mat, design = des.diff.bmi[colnames(diff.soma.mat),], 
                                               contr=contr.bmi, add.means = FALSE)
 
-soma.tab <- data.frame(soma.stats[rownames(soma.diff.stats), avg.cols], soma.diff.stats, 
+soma.tab <- data.frame(soma.stats[rownames(soma.diff.stats), c(avg.cols, t0.cols)], soma.diff.stats, 
                        soma.bmi.diff.stats[rownames(soma.diff.stats),], soma.annot[rownames(soma.diff.stats),])
 write.csv(df_signif(soma.tab), "results/soma_supp_table.csv")
 ```
@@ -135,7 +136,9 @@ met.bmi.diff.stats <- signif(limma_contrasts(diff.met.mat, design = des.met.diff
                                               contr=contr.bmi[-3], add.means = FALSE), 3)
 #order avg cols
 avg.cols <- intersect(avg.grps, grep("avg$", colnames(met.stats), value = TRUE))
-met.tab <- data.frame(met.stats[rownames(met.diff.stats), avg.cols], met.diff.stats, 
+t0.cols <- grep("^RYGBvsDWMat0mo", colnames(met.stats), value = TRUE)
+
+met.tab <- data.frame(met.stats[rownames(met.diff.stats), c(avg.cols, t0.cols)], met.diff.stats, 
                       met.bmi.diff.stats[rownames(met.diff.stats),], met.annot[rownames(met.diff.stats),])
 write.csv(df_signif(met.tab), "./results/met_supp_table.csv", na="")
 ```
@@ -179,7 +182,7 @@ soma.dmc.df <- data.frame(signif(soma.dmc.stats, 3), soma.annot[rownames(soma.dm
 write.csv(soma.dmc.df, "./results/soma_dmcure_table.csv")
 ```
 
-The Soma table with statistics on differences in remission is at [soma_dmcure_table.csv](./results/soma_dmcure_table.csv). The minimum FDR is `r signif(min(soma.dmc.stats$dmcure.FDR), 3)`.
+The Soma table with statistics on differences in remission is at [soma_dmcure_table.csv](./results/soma_dmcure_table.csv). The minimum FDR is `r signif(min(soma.dmc.stats$dmcure_vs_not.FDR), 3)`.
 
 ## Metabolome
 
@@ -191,7 +194,7 @@ met.dmc.df <- data.frame(signif(met.dmc.stats, 3), met.annot[rownames(met.dmc.st
 write.csv(met.dmc.df, "./results/met_dmcure_table.csv")
 ```
 
-The met table with statistics on differences is at [met_dmcure_table.csv](./results/met_dmcure_table.csv). The minimum FDR is `r signif(min(met.dmc.stats$dmcure.FDR), 3)`.
+The met table with statistics on differences is at [met_dmcure_table.csv](./results/met_dmcure_table.csv). The minimum FDR is `r signif(min(met.dmc.stats$dmcure_vs_not.FDR), 3)`.
 
 # Hitman/Lotman
 
@@ -242,7 +245,7 @@ hm.a1c.met.df.ss <- hm.a1c.met.df[hm.a1c.met.df$EMY.p < clin3.lm[1, "EMY.p"] &
                                       hm.a1c.met.df$EMY.FDR < clin3.lm[1, "EMY.FDR"],]
 ```
 
-The protein analytes more significant in p-value & FDR than any clinical mediator are: `r kable(hm.soma.top)`.
+The protein analytes more significant in p-value & FDR than any clinical mediator are: `r kable(hm.soma.top)`
 
 The metabolite mediators are `r hm.a1c.met.df.ss$BIOCHEMICAL`
 
@@ -358,7 +361,7 @@ We write the z-score for the between-arm comparison of each analyte's 3 month di
 
 ```{r deltas}
 # diff_mat file created in gb_ww_net_integration
-diff.mat3 <- read.csv('data/soma_and_met_diff_mat.csv', row.names=1)
+diff.mat3 <- read.csv('../slimm-t2d-omics-data/soma_and_met_diff_mat.csv', row.names=1)
 
 #need to eval this for below
 grp.v <- pheno[paste0(colnames(diff.mat3), "_0"), "arm"]
@@ -425,7 +428,7 @@ setwd("..")
 
 ```{r deltas.homair}
 # diff_mat file created in gb_ww_net_integration
-diff.mat3 <- read.csv("data/soma_and_met_diff_mat.csv", row.names=1)
+diff.mat3 <- read.csv("../slimm-t2d-omics-data/soma_and_met_diff_mat.csv", row.names=1)
 nms.tmp <- intersect(colnames(diff.mat3), rownames(diff.pheno12)[!is.na(diff.pheno12$homair)])
 hm <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="DWM"), 
              M=diff.mat3[,nms.tmp], 
