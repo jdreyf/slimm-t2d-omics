@@ -14,7 +14,7 @@ We validate the ability of each of our methods (`hitman`, `lotman`, and `pants`)
 
 # Mediation
 
-We simulate our mediation methods using the benchmark simulation from Barfield et al. (2017).
+We simulate our mediation methods using the benchmark simulation from Barfield et al. (2017), using an internal function of `ezlimma`.
 
 ## Lotman
 
@@ -33,6 +33,16 @@ This calculation takes ~30 min on my desktop PC. Our simulation results are at [
 prop.sig.mat <- ezlimma:::sim_barfield(med.fcn = hitman, b1t2.v=c(0, 0.14, 0.39), nsim = 10**4, ngene=99)
 write.csv(prop.sig.mat, "./results/sim_hitman_nsamp50_nsim10000.csv", na="")
 ```
+
+## Joint Significance
+
+We implemented the joint significance test in R to compare our mediation methods to. We first tested that our results were identical to those from the funciton `mdt_simple` in package `JSmediation`. Here, we validate that our implementation matches Barfield et al. (2017). This calculation takes ~5 min on my desktop PC. 
+
+```{r, eval=FALSE}
+prop.sig.mat <- ezlimma:::sim_barfield(med.fcn = joint_signif_mediation, b1t2.v=c(0, 0.14, 0.39), nsim = 10**4)
+write.csv(prop.sig.mat, "./results/sim_jointsig_nsamp50_nsim10000.csv", na="")
+```
+
 
 # Pants
 
