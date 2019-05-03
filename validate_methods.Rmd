@@ -8,6 +8,7 @@ output: word_document
 knitr::opts_chunk$set(echo = FALSE, include=FALSE)
 options(digits=3, stringsAsFactors=FALSE)
 library(ezlimma)
+library(PANTS)
 ```
 
 We validate the ability of each of our methods (`hitman`, `lotman`, and `pants`) to control their false positive rate (*size*) and have high rate of detecting true positives (*power*) via simulations, where we know the truth.
@@ -43,10 +44,32 @@ prop.sig.mat <- ezlimma:::sim_barfield(med.fcn = joint_signif_mediation, b1t2.v=
 write.csv(prop.sig.mat, "./results/sim_jointsig_nsamp50_nsim10000.csv", na="")
 ```
 
-
 # Pants
 
+Validate group contrasts & correlation.
 
+```{r, eval=FALSE}
+data("pc9")
+gr <- igraph::simplify(igraph::graph_from_edgelist(pc9, directed = FALSE))
+ker <- graph2kernel(gr = gr)
+data("smpdb_gmat")
+nsample <- 20
+nperm <- 10**4
+
+# b/c i add 1 to avoid p=0, more nperm --> lower p
+# contrasts
+phenotype <- setNames(rep(c("trt", "ctrl"), each=nsample/2), paste0("s", 1:nsample))
+sp <- PANTS:::sim_pants(Gmat=smpdb_gmat, phenotype = phenotype, nsim=10, nperm=nperm, effect.v = c(0, 0.2), 
+                        ker=ker, ncores=8)
+write.csv(sp[1,, drop=FALSE], paste0("./results/sim_pants_contrasts_nperm", nperm, ".csv"), na="")
+
+# cor
+set.seed(1)
+phenotype = setNames(rnorm(nsample), paste0("s", 1:nsample))
+sp <- PANTS:::sim_pants(Gmat=smpdb_gmat, phenotype = phenotype, nsim=100, nperm=nperm, effect.v = c(0, 0.2), 
+                        ker=ker, ncores=8, type="correlation")
+write.csv(sp[1,, drop=FALSE], "./results/sim_pants_correlation.csv", na="")
+```
 
 # References
 Barfield R, Shen J, Just AC, Vokonas PS, Schwartz J, Baccarelli AA, VanderWeele TJ, Lin X. Testing for the indirect 
