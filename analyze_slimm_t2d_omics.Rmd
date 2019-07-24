@@ -8,7 +8,7 @@ output: word_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, include=FALSE)
 options(digits=3, stringsAsFactors=FALSE)
-source("make_diff_mat.R")
+source("R/make_diff_mat.R")
 
 library(devtools)
 library(ggplot2)
@@ -21,7 +21,7 @@ library(zeallot)
 library(limma)
 library(ezlimma)
 library(ezlimmaplot)
-library(PANTS)
+library(Pame)
 ```
 
 # Read data and take the difference from baseline per person
@@ -207,14 +207,14 @@ We apply Hitman/Lotman to 12mo HbA1c change using change at 3mo from baseline in
 ```{r hm_a1c_3}
 #soma
 nms.tmp <- intersect(gsub("_3$", "", grep("_3$", colnames(diff.soma.mat), value=TRUE)), rownames(diff.pheno12))
-hm.soma <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="DWM"), 
+hm.soma <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="RYGB"), 
                   M=diff.soma.mat[,paste0(nms.tmp, "_3")], 
                   Y=diff.pheno12[nms.tmp, "HbA1c"])
 hm.a1c.soma.df <- data.frame(signif(hm.soma, 3), soma.annot[rownames(hm.soma),])
 write.csv(hm.a1c.soma.df, "./results/HbA1c12_vs_soma3_hitman.csv")
 #met
 nms.tmp <- intersect(gsub("_3$", "", grep("_3$", colnames(diff.met.mat), value=TRUE)), rownames(diff.pheno12))
-hm.met <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="DWM"), M=diff.met.mat[,paste0(nms.tmp, "_3")], 
+hm.met <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="RYGB"), M=diff.met.mat[,paste0(nms.tmp, "_3")], 
                   Y=diff.pheno12[nms.tmp, "HbA1c"])
 hm.a1c.met.df <- data.frame(signif(hm.met, 3), met.annot[rownames(hm.met),])
 write.csv(hm.a1c.met.df, "./results/HbA1c12_vs_met3_hitman.csv")
@@ -332,20 +332,23 @@ colnames(cor.r.out)[(ncol(cor.r.out)-1)] <- NA
 write.csv(t(cor.r.out), "results/soma_met_corr_coeffs.csv")
 ```
 
-# Pants
-For a network integration analysis of differences, we use Pathway Commons PC9 and SMPDB files downloaded around 2016.
+# Pathways
 
-```{r pants_data}
-data("pc9")
+For pathway input data, differences from baseline are combined for people who have both somascan & metabolomics. Analytes are subset and summarized (by averaging over analytes with the same ID) to match network, for network plotting.
+
+We plot the top pathways. The t-statistics from ezlimma have sufficiently many degrees of freedom to be approximately z-scores, which are better known, so we annotate them as z-scores. For a network plotting of differences, we use Pathway Commons PC9 and SMPDB files downloaded around 2016.
+
+```{r net_data}
+load("data/pc9.rda")
 gr <- igraph::simplify(igraph::graph_from_edgelist(pc9, directed = FALSE))
-ker <- graph2kernel(gr = gr)
-data("smpdb_gmat")
-ntop <- 100
+load("data/smpdb_gmat.rda")
+# smpdb_gmat <- smpdb_gmat[setdiff(rownames(smpdb_gmat), "CHEBI:15377"),]
+smpdb_gmt <- Gmat2gmt(smpdb_gmat)
 ```
 
 We map ChEBI IDs in PC9 to chemical names, so that we can show the names in our network plots.
 
-```{r pants_chebi}
+```{r chebi_map}
 # file created in gb_ww_net_integration
 chebi.map <- read.csv('data/chebi_map_v2.csv', row.names=1)
 #turn into a named vector
@@ -353,9 +356,7 @@ chebi.map <- setNames(chebi.map[,1], rownames(chebi.map))
 chebi.map[which(chebi.map=='')] <- names(chebi.map)[which(chebi.map=='')]
 ```
 
-For input data to Pants, differences from baseline are combined for people who have both somascan & metabolomics. Analytes are subset and summarized (by averaging over analytes with the same ID) to match network.
-
-## Pants between-group
+## Roast between-group
 
 We write the z-score for the between-arm comparison of each analyte's 3 month difference from baseline from `ezlimma::limma_contrasts` to use in results.
 
@@ -366,7 +367,6 @@ diff.mat3 <- read.csv('../slimm-t2d-omics-data/soma_and_met_diff_mat.csv', row.n
 #need to eval this for below
 grp.v <- pheno[paste0(colnames(diff.mat3), "_0"), "arm"]
 contr.v <- c(RYGBvsDWM="RYGB-DWM")
-score_fcn <- abs
 
 #feature (analyte) stats from ezlimma
 fs <- limma_contrasts(diff.mat3, grp=grp.v, contrast.v = c(RYGBvsDWM="RYGB-DWM"), cols=c("t", "P.Value", "adj.P.Val"))
@@ -374,43 +374,30 @@ fs.df <- data.frame(signif(fs, 4), CHEBI=chebi.map[rownames(fs)])
 write.csv(fs.df, "results/deltadelta_t.csv")
 ```
 
-We executed the chunk below on 2019-02-17 on a Linux cluster parallelized over 20 cores, and it took only several minutes. Here we execute it on a Windows machine with 8 cores with less RAM, which takes much longer. You can see how many cores you have available with `parallel::detectCores()`.
+Run roast.
 
-```{r pants, eval=FALSE}
-# read in objects with prepare_pants_on_o2.Rmd
+```{r roast, eval=FALSE}
+# read in objects with prepare_pame_on_o2.Rmd
 setwd("./results")
 fs <- read.csv("deltadelta_t.csv", row.names = 1)
-nperm <- 5*10**4
-nm <- "absdeltadelta_stats_nperm50000"
-#Matrix::crossprod(score.match.mat, ker) -> Cholmod error 'out of memory'
-#score.match.mat 30k x nperm, 3% nz; ker 30k x 30k, 0.3% nz; both dgCMat
-zeallot::`%<-%`(c(ps, fs), pants(object=diff.mat3, phenotype=grp.v, contrast.v=contr.v, ker=ker, Gmat=smpdb_gmat,
-                   score_fcn = score_fcn, nperm=nperm, alternative="greater", min.nfeats=3, feat.tab = fs, ntop = ntop,
-                   name=nm, ncores=8) )
-write.csv(signif(ps, 3), paste0(nm, "_pants.csv"))
-#feature stats from Pants non-parametric permutations
-feat.df <- data.frame(signif(fs, 3), annot=chebi.map[rownames(fs)])
-write.csv(feat.df, "absdeltadelta_feature_stats_nperm50000_pants.csv")
+G.smpdb <- Gmat2gmt(smpdb_gmat)
+nrot <- 2*10**5
+res <- roast_contrasts(object=diff.mat3, G=G.smpdb, feat.tab=fs, grp=grp.v, contrast.v=contr.v, fun="mroast", 
+                       nrot=nrot, name = paste0("RYGBvsDWM_nrot", nrot))
+res <- res[order(res$RYGBvsDWM.Mixed.p),]
+res.cols <- c("NGenes", grep("Mixed", colnames(res), value = TRUE))
+res <- res[, res.cols]
+write.csv(df_signif(res, 3), paste0("RYGBvsDWM_stats_nrot", nrot, "_roast.csv"))
 setwd("..")
 ```
 
-We plot the top pathways shown in the paper. The t-statistics from above have sufficiently many degrees of freedom to be approximately z-scores, which are better known, so we annotate them as z-scores.
+Roast barplot.
 
-```{r plot_pants_pwys}
-setwd("./results")
-fs <- read.csv("deltadelta_t.csv", row.names = 1)
-#net plots
-fs.t <- setNames(fs$RYGBvsDWM.t, nm=rownames(fs))
-plot_pwy(gr=gr, ker=ker, Gmat=smpdb_gmat, pwy="Beta-Alanine Metabolism", annot=chebi.map, ntop=10, zscore.v=fs.t, seed=4)
-# i used ntop=6 for 1st submission
-plot_pwy(gr=gr, ker=ker, Gmat=smpdb_gmat, pwy="Phospholipid Biosynthesis", annot=chebi.map, ntop=6, zscore.v=fs.t, seed=4)
-setwd("..")
-```
-
-```{r pants_barplot}
+```{r roast_barplot, eval=FALSE}
 setwd("./results")
 #no rownames for ggplot2
-pwys <- read.csv("absdeltadelta_stats_nperm50000_pants.csv")
+pwys <- read.csv("RYGBvsDWM_stats_nrot2e+05_roast.csv")
+colnames(pwys) <- sub("RYGBvsDWM.Mixed.", "", colnames(pwys), fixed = TRUE)
 colnames(pwys)[1] <- "pwy.nm"
 pwys$nlog10pv <- -log10(pwys$p)
 pwys.ss <- pwys[pwys$FDR < 0.01,]
@@ -418,19 +405,56 @@ pwys.ss$pwy.nm <- factor(pwys.ss$pwy.nm, levels=rev(pwys.ss$pwy.nm), ordered=TRU
 
 ggp <- ggplot(data=pwys.ss, mapping=aes(x=pwy.nm, y=nlog10pv, fill=FDR)) + geom_col() + xlab("Pathway") + theme_bw() + 
   ylab("-log10(p-value)") + coord_flip() + theme(legend.title = element_text(size = 16), legend.text = element_text(size = 16),
-                                                 axis.title.x=element_text(size=16), axis.text.x=element_text(size=12),
-                                                 axis.text.y=element_text(size=20), axis.title.y = element_blank())
-ggsave("pwy_sig_barplot.pdf", ggp, width=11, height=8.5)
+                                                 axis.title.x=element_text(size=20), axis.text.x=element_text(size=12),
+                                                 axis.text.y=element_text(size=24), axis.title.y = element_blank())
+# fig will be horizontal in paper
+ggsave("../figures/pwy_sig_barplot.pdf", ggp, width=11, height=5)
 setwd("..")
 ```
 
-## Pants Hitman homair
+Plot Roast pwys.
 
-```{r deltas.homair}
+```{r plot_pwys, eval=FALSE}
+setwd("./results")
+
+fs <- read.csv("deltadelta_t.csv", row.names = 1)
+#net plots
+fs.z <- data.frame(z=fs$RYGBvsDWM.t, annot=fs$CHEBI)
+rownames(fs.z) <- rownames(fs)
+fs.z$annot[is.na(fs.z$annot)] <- rownames(fs.z)[is.na(fs.z$annot)]
+new.chebi <- setdiff(names(chebi.map), rownames(fs.z))
+new.chebi.df <- data.frame(z=NA, annot=chebi.map[new.chebi])
+fs.z <- rbind(fs.z, new.chebi.df)
+
+pwy.tmp <- read.csv("RYGBvsDWM_nrot2e+05_mroast/pathways/Beta_Alanine_Metabolism.csv", row.names = 1)
+ntop <- 7
+plot_pwy(feat.tab = fs.z, G.pwy = smpdb_gmt[["Beta-Alanine Metabolism"]], stat.colnm = "z", annot.col = "annot",
+         gr=gr, ntop = ntop, alternative="two.sided", repel = TRUE, seed=0,
+         name = paste0("../figures/Beta_Alanine_Metabolism_ntop", ntop))
+
+# only 4 analytes intersect
+pwy.tmp <- read.csv("RYGBvsDWM_nrot2e+05_mroast/pathways/Phospholipid_Biosynthesis.csv", row.names = 1)
+ntop <- 7
+plot_pwy(feat.tab = fs.z, G.pwy = smpdb_gmt[["Phospholipid Biosynthesis"]], stat.colnm = "z", annot.colnm = "annot",
+         gr=gr, ntop = ntop, alternative="two.sided", repel = TRUE, seed=3,
+         name = paste0("../figures/Phospholipid_Biosynthesis_ntop", ntop))
+setwd("..")
+```
+
+# Pame
+
+We apply Hitman to combined (metabolite + protein) dataset, then test Pame.
+
+```{r}
 # diff_mat file created in gb_ww_net_integration
 diff.mat3 <- read.csv("../slimm-t2d-omics-data/soma_and_met_diff_mat.csv", row.names=1)
+```
+
+## Pame homair
+
+```{r deltas.homair}
 nms.tmp <- intersect(colnames(diff.mat3), rownames(diff.pheno12)[!is.na(diff.pheno12$homair)])
-hm <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="DWM"), 
+hm <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="RYGB"), 
              M=diff.mat3[,nms.tmp], 
              Y=diff.pheno12[nms.tmp, "homair"])
 hm.df <- data.frame(signif(hm, 3), CHEBI=chebi.map[rownames(hm)])
@@ -440,21 +464,76 @@ write.csv(hm.df, "results/homair12_vs_analytes3_hitman_stats.csv")
 We write the hitman results for each analyte's 3mo change from baseline as a mediator of 12mo HOMA-IR change.
 
 ```{r ph.homair, eval=FALSE}
-setwd("results")
+setwd("./results")
 hm.df <- read.csv("homair12_vs_analytes3_hitman_stats.csv", row.names = 1)
 diff.nms <- intersect(rownames(diff.pheno12)[!is.na(diff.pheno12$homair)], colnames(diff.mat3))
-exposure.v <- as.numeric(diff.pheno12[diff.nms, "arm"] == "DWM")
+exposure.v <- as.numeric(diff.pheno12[diff.nms, "arm"] == "RYGB")
 
-nm <- "homair_stats_nperm50000"
 nperm <- 5*10**4
-zeallot::`%<-%`(c(ps, fs), pants_hitman(object=diff.mat3[,diff.nms], exposure=exposure.v, phenotype=diff.pheno12[diff.nms, "homair"],
-                        ker=ker, Gmat=smpdb_gmat, nperm=nperm, min.nfeats=3, feat.tab = hm.df, ncores=8, name = nm, ntop=ntop) )
+nm <- paste0("homair_stats_nperm", nperm)
+c(ps, fs) %<-% pame(M=diff.mat3[,diff.nms], E=exposure.v, Y=diff.pheno12[diff.nms, "homair"],
+                     Gmat=smpdb_gmat, nperm=nperm, min.nfeats=3, 
+                     annot.df = hm.df[, c("EMY.p", "EMY.FDR", "CHEBI")], ncores=1, name = nm)
 write.csv(ps, paste0(nm, ".csv"))
-#feature stats from Pants non-parametric permutations
-feat.df <- data.frame(signif(fs, 3), annot=chebi.map[rownames(fs)])
-write.csv(feat.df, "homair_feature_stats_nperm50000_pants_hitman.csv")
+
+# feature stats from Pants non-parametric permutations
+feat.df <- data.frame(ezlimma::df_signif(fs, 3), annot=chebi.map[rownames(fs)])
+write.csv(feat.df, paste0("homair_feature_stats_nperm", nperm, "_pame.csv"))
 setwd("..")
 ```
+
+## Pame HbA1c
+
+```{r deltas.HbA1c}
+setwd("./results", eval=FALSE)
+nms.tmp <- intersect(colnames(diff.mat3), rownames(diff.pheno12)[!is.na(diff.pheno12$HbA1c)])
+hm <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="RYGB"), 
+             M=diff.mat3[,nms.tmp], 
+             Y=diff.pheno12[nms.tmp, "HbA1c"])
+hm.df <- data.frame(signif(hm, 3), CHEBI=chebi.map[rownames(hm)])
+
+diff.nms <- intersect(rownames(diff.pheno12)[!is.na(diff.pheno12$HbA1c)], colnames(diff.mat3))
+exposure.v <- as.numeric(diff.pheno12[diff.nms, "arm"] == "RYGB")
+
+nperm <- 10**4
+nm <- paste0("HbA1c_stats_nperm", nperm)
+begin <- Sys.time()
+c(ps, fs) %<-% pame(M=diff.mat3[,diff.nms], E=exposure.v, Y=diff.pheno12[diff.nms, "HbA1c"],
+                     Gmat=smpdb_gmat, nperm=nperm, min.nfeats=3, 
+                     annot.df = hm.df[, c("EMY.p", "EMY.FDR", "CHEBI")], ncores=1, name = nm)
+end <- Sys.time()
+(end - begin)/nperm # 0.00064 mins
+
+head(ps) # min fdr = 0.36
+
+setwd("..")
+```
+
+We find no significant pathways.
+
+## Pame dins030
+
+```{r deltas.dins030, eval=FALSE}
+setwd("./results")
+nms.tmp <- intersect(colnames(diff.mat3), rownames(diff.pheno12)[!is.na(diff.pheno12$dins030)])
+hm <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="RYGB"), 
+             M=diff.mat3[,nms.tmp], 
+             Y=diff.pheno12[nms.tmp, "dins030"])
+hm.df <- data.frame(signif(hm, 3), CHEBI=chebi.map[rownames(hm)])
+
+diff.nms <- intersect(rownames(diff.pheno12)[!is.na(diff.pheno12$dins030)], colnames(diff.mat3))
+exposure.v <- as.numeric(diff.pheno12[diff.nms, "arm"] == "RYGB")
+
+nperm <- 10**4
+nm <- paste0("dins030_stats_nperm", nperm)
+c(ps, fs) %<-% pame(M=diff.mat3[,diff.nms], E=exposure.v, Y=diff.pheno12[diff.nms, "dins030"],
+                     Gmat=smpdb_gmat, nperm=nperm, min.nfeats=3, 
+                     annot.df = hm.df[, c("EMY.p", "EMY.FDR", "CHEBI")], ncores=1, name = nm)
+head(ps) # min  FDR 0.21
+setwd("..")
+```
+
+We find no signifiance pathways.
 
 # Session info
 
