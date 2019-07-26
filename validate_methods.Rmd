@@ -72,12 +72,20 @@ effect.v <- 0:3
 load("data/smpdb_gmat.rda")
 ```
 
-Run mesa on simulations using internal `Mesa` functions.
+Test mesa
 
 ```{r, eval=FALSE}
 # b/c i add 1 to avoid p=0, more nperm --> lower p
-spm <- Mesa::sim_msa(Gmat=smpdb_gmat, nsample=8, nsim=nsim, nperm=nperm, effect.v = effect.v, ncores=4)
+spm <- Mesa::sim_msa(msea, Gmat=smpdb_gmat, nsample=nsample, nsim=nsim, nperm=nperm, effect.v = effect.v, ncores=1)
 write.csv(spm[1,, drop=FALSE], paste0("./validation/sim_msa_nperm", nperm, "_nsim", nsim, ".csv"), na="")
+```
+
+Test global mediation test
+
+```{r, eval=FALSE}
+# b/c i add 1 to avoid p=0, more nperm --> lower p
+spm <- Mesa::sim_msa(Gmat=smpdb_gmat, nsample=nsample, nsim=nsim, nperm=nperm, effect.v = effect.v)
+write.csv(spm[1,, drop=FALSE], paste0("./validation/sim_gmt_nperm", nperm, "_nsim", nsim, ".csv"), na="")
 ```
 
 Run hitman fisher? better on function that can be sent to sim_msa.
