@@ -22,6 +22,8 @@ library(limma)
 library(ezlimma)
 library(ezlimmaplot)
 library(Pame)
+
+source("R/ezmediate.R")
 ```
 
 # Read data and take the difference from baseline per person
@@ -218,6 +220,7 @@ hm.met <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="RYGB"), M=diff.met.
                   Y=diff.pheno12[nms.tmp, "HbA1c"])
 hm.a1c.met.df <- data.frame(signif(hm.met, 3), met.annot[rownames(hm.met),])
 write.csv(hm.a1c.met.df, "./results/HbA1c12_vs_met3_hitman.csv")
+
 #clinical
 #remove: arm & grp not a difference; creatinine not measured at 3mo
 rm.cols <- c("arm", "grp", grep("Creatinine", colnames(diff.pheno3), value=TRUE))
@@ -227,22 +230,25 @@ diff.pheno3 <- diff.pheno3[intersect(rownames(diff.pheno3), rownames(diff.pheno1
 #diff.pheno3 has TOPAZ, but TOPAZ has all NAs at 12mo
 arm.v <- setNames(as.numeric(pheno[paste0(rownames(diff.pheno3), "_0"), "arm"]=="RYGB"), nm=rownames(diff.pheno3))
 HbA1c <- setNames(diff.pheno12[rownames(diff.pheno3), "HbA1c"], nm=rownames(diff.pheno3))
-clin3.lm <- lotman(E=arm.v, M=t(diff.pheno3), Y=HbA1c)
-write.csv(signif(clin3.lm, 3), "./results/HbA1c12_vs_clin3_lotman.csv", na="")
+
+# ezmediate gives p=0, which is not correct, even with 10**4 simulations
+clin3.hm <- hitman(E=arm.v, M=t(diff.pheno3), Y=HbA1c)
+write.csv(signif(clin3.hm, 3), "./results/HbA1c12_vs_clin3_hitman.csv", na="")
 ```
 
 ### Compare clinical vs analytes
 
+## HbA1c
 ```{r}
-hm.a1c.soma.df.ss <- hm.a1c.soma.df[hm.a1c.soma.df$EMY.p < clin3.lm[1, "EMY.p"] & 
-                                      hm.a1c.soma.df$EMY.FDR < clin3.lm[1, "EMY.FDR"],]
+hm.a1c.soma.df.ss <- hm.a1c.soma.df[hm.a1c.soma.df$EMY.p < clin3.hm[1, "EMY.p"] & 
+                                      hm.a1c.soma.df$EMY.FDR < clin3.hm[1, "EMY.FDR"],]
 pr <- rownames(hm.a1c.soma.df.ss)
 hm.soma.top <- data.frame(probe=pr, ratio3=fc2ratio(soma.stats[pr, "RYGBvsDWMat3mo.FC"]),
                           nm=hm.a1c.soma.df.ss$TargetFullName, 
                           EntrezGeneSymbol=hm.a1c.soma.df.ss$EntrezGeneSymbol)
 
-hm.a1c.met.df.ss <- hm.a1c.met.df[hm.a1c.met.df$EMY.p < clin3.lm[1, "EMY.p"] & 
-                                      hm.a1c.met.df$EMY.FDR < clin3.lm[1, "EMY.FDR"],]
+hm.a1c.met.df.ss <- hm.a1c.met.df[hm.a1c.met.df$EMY.p < clin3.hm[1, "EMY.p"] & 
+                                      hm.a1c.met.df$EMY.FDR < clin3.hm[1, "EMY.FDR"],]
 ```
 
 The protein analytes more significant in p-value & FDR than any clinical mediator are: `r kable(hm.soma.top)`

@@ -9,14 +9,14 @@ knitr::opts_chunk$set(echo = FALSE, include=FALSE)
 options(digits=3, stringsAsFactors=FALSE)
 library(ezlimma)
 library(ezlimmaplot)
-library(Pame)
+library(Mesa)
 ```
 
-We validate the ability of each of our methods (`hitman`, `lotman`, and `pame`) to control their false positive rate (*size*) and have high rate of detecting true positives (*power*) via simulations, where we know the truth.
+We validate the ability of `hitman` and `mesa` to control their false positive rate (*size*) and have high rate of detecting true positives (*power*) via simulations, where we know the truth.
 
 # Mediation
 
-We simulate our mediation methodsand compare them against the benchmark simulation of several mediation methods from Barfield et al. (2017),  Table 1, for N=50.
+We simulate our mediation methodsand compare them against the benchmark simulation of several mediation methods from Barfield et al. (2017), Table 1, for N=50.
 
 ## Validating our simulations
 
@@ -29,22 +29,6 @@ nsim <- 10**4
 prop.sig.js <- ezlimma:::sim_barfield(med.fcn = joint_signif_mediation, b1t2.v=c(0, 0.14, 0.39), nsim = nsim)
 write.csv(prop.sig.js, paste0("./validation/sim_jointsig_nsamp50_nsim", nsim, ".csv"), na="")
 ```
-
-## Lotman
-
-This calculation takes ~10 min on my desktop PC. Our simulation results are at [sim_lotman_nsamp50_nsim10000.csv](./validation/sim_lotman_nsamp50_nsim10000.csv).
-
-```{r, eval=FALSE}
-nsim <- 10**4
-
-start.lot <- Sys.time()
-prop.sig.lot <- ezlimma:::sim_barfield(med.fcn = lotman, b1t2.v=c(0, 0.14, 0.39), nsim = nsim)
-stop.lot <- Sys.time()
-
-write.csv(prop.sig.lot, paste0("./validation/sim_lotman_nsamp50_nsim", nsim, ".csv"), na="")
-```
-
-This function took `r stop.lot-start.lot`.
 
 ## Hitman
 
@@ -74,44 +58,35 @@ med.time <- stop.med-start.med
 write.csv(prop.sig.med, paste0("./validation/sim_mediation_nsamp50_nsim", nsim, ".csv"), na="")
 ```
 
-# Pame
+# MSA
 
-Declare variables.
+We simulate data to test multiple methods for Mediator Set Analysis (MSA), including our own (Mesa), the global mediation test, and a fisher test. For this we use our function `sim_msa`.
 
 ```{r}
-nsample <- 20
+# Declare variables.
+nsample <- 8
 nperm <- 10**3
 nsim <- 50
+effect.v <- 0:3
 
 load("data/smpdb_gmat.rda")
-g.smpdb <- Gmat2gmt(smpdb_gmat)
-all.feats <- rownames(smpdb_gmat)
-exposure <- setNames(rep(0:1, each=nsample/2), paste0("s", 1:nsample))
 ```
 
-Run pame on simulations using internal `Pame` functions.
+Run mesa on simulations using internal `Mesa` functions.
 
 ```{r, eval=FALSE}
 # b/c i add 1 to avoid p=0, more nperm --> lower p
-spm <- Pane:::sim_pane(Gmat=smpdb_gmat, exposure = exposure, nsim=nsim, nperm=nperm, effect.v = c(0, 0.1), ncores=4)
-write.csv(spm[1,, drop=FALSE], paste0("./validation/sim_pane_nperm", nperm, "_nsim", nsim, ".csv"), na="")
+spm <- Mesa::sim_msa(Gmat=smpdb_gmat, nsample=8, nsim=nsim, nperm=nperm, effect.v = effect.v, ncores=4)
+write.csv(spm[1,, drop=FALSE], paste0("./validation/sim_msa_nperm", nperm, "_nsim", nsim, ".csv"), na="")
 ```
 
-Run hitman fisher
+Run hitman fisher? better on function that can be sent to sim_msa.
 
 ```{r, eval=FALSE}
 sfh <- ezlimma:::sim_fisher_hitman(G=g.smpdb[1:2], E = exposure, all.feats = all.feats, nsim=200, 
                                    effect.v = c(0, 0.01), prop.other.sig = 0.25)
 head(sfh)
 ```
-
-Run ORA on hitman mediation on simulations using `sim_ora_mediation`.
-
-```{r}
-som <- sim_ora_mediation(G=g.smpdb, exposure = exposure, nsim=4*nsim, effect.v = c(0, 0.1), all.feats=all.feats)
-write.csv(som[1,, drop=FALSE], paste0(".validation/sim_ora_mediation_nsim", nsim, ".csv"), na="")
-```
-
 
 # References
 Barfield R, Shen J, Just AC, Vokonas PS, Schwartz J, Baccarelli AA, VanderWeele TJ, Lin X. Testing for the indirect effect under the null for genome-wide mediation analyses. Genet Epidemiol. 2017 Dec;41(8):824-833.
