@@ -60,7 +60,7 @@ write.csv(prop.sig.med, paste0("./validation/sim_mediation_nsamp50_nsim", nsim, 
 
 # MSA
 
-We simulate data to test multiple methods for Mediator Set Analysis (MSA), including our own (Mesa), the global mediation test, and a fisher test. For this we use our function `sim_msa`.
+We simulate data to test multiple methods for Mediator Set Analysis (MSA), including our own (Mesa), & the global mediation test. For this we use our function `sim_msa`.
 
 ```{r}
 # Declare variables.
@@ -76,16 +76,15 @@ Test mesa
 
 ```{r, eval=FALSE}
 # b/c i add 1 to avoid p=0, more nperm --> lower p
-spm <- Mesa::sim_msa(msea, Gmat=smpdb_gmat, nsample=nsample, nsim=nsim, nperm=nperm, effect.v = effect.v, ncores=1)
-write.csv(spm[1,, drop=FALSE], paste0("./validation/sim_msa_nperm", nperm, "_nsim", nsim, ".csv"), na="")
+sim.m <- Mesa::sim_msa(msea, Gmat=smpdb_gmat, nsample=nsample, nsim=nsim, nperm=nperm, effect.v = effect.v, ncores=1)
+write.csv(sim.m[1,, drop=FALSE], paste0("./validation/sim_msa_nperm", nperm, "_nsim", nsim, ".csv"), na="")
 ```
 
-Test global mediation test
+Test global mediation test from Djordjilovic et al. (2018)
 
 ```{r, eval=FALSE}
-# b/c i add 1 to avoid p=0, more nperm --> lower p
-spm <- Mesa::sim_msa(Gmat=smpdb_gmat, nsample=nsample, nsim=nsim, nperm=nperm, effect.v = effect.v)
-write.csv(spm[1,, drop=FALSE], paste0("./validation/sim_gmt_nperm", nperm, "_nsim", nsim, ".csv"), na="")
+sim.gmt <- Mesa::sim_msa(msa.fcn = global_mediation_test, Gmat=smpdb_gmat, nsample=nsample, nsim=nsim, verbose=TRUE, effect.v = effect.v)
+write.csv(sim.gmt[1,, drop=FALSE], paste0("./validation/sim_gmt_nperm", nperm, "_nsim", nsim, ".csv"), na="")
 ```
 
 Run hitman fisher? better on function that can be sent to sim_msa.
@@ -98,3 +97,5 @@ head(sfh)
 
 # References
 Barfield R, Shen J, Just AC, Vokonas PS, Schwartz J, Baccarelli AA, VanderWeele TJ, Lin X. Testing for the indirect effect under the null for genome-wide mediation analyses. Genet Epidemiol. 2017 Dec;41(8):824-833.
+
+Djordjilović V, Page CM, Gran JM, Nøst TH, Sandanger TM, Veierød MB, Thoresen M. Global test for high-dimensional mediation: Testing groups of potential mediators. Stat Med. 2019 Aug 15;38(18):3346-3360.
