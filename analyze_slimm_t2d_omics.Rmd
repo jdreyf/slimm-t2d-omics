@@ -6,13 +6,17 @@ output: word_document
 ---
 
 ```{r setup, include=FALSE}
+setwd("B:/patti/gb_ww_trial/slimm-t2d-omics/")
+
 knitr::opts_chunk$set(echo = FALSE, include=FALSE)
 options(digits=3, stringsAsFactors=FALSE)
 source("R/make_diff_mat.R")
 
-library(devtools)
+library(dplyr)
+library(usethis)
 library(ggplot2)
 library(knitr)
+library(Matrix)
 library(zeallot)
 
 # instructions to install the latest version of these R packages are in README at: https://github.com/jdreyf/PANTS
@@ -21,9 +25,10 @@ library(zeallot)
 library(limma)
 library(ezlimma)
 library(ezlimmaplot)
-library(Pame)
+library(Hitman)
+library(Mesa)
 
-source("R/ezmediate.R")
+FDR <- 0.15
 ```
 
 # Read data and take the difference from baseline per person
@@ -118,14 +123,42 @@ The Soma supp table with means per group per time point and statistics on differ
 
 ```{r soma_venns}
 setwd("./results")
-soma.venn <- ezvenn(soma.tab, prefix.v = names(contr.v1)[-1], fdr.cutoff = 0.05, name="soma_FDR05", plot = FALSE)
+soma.venn <- ezvenn(soma.tab, prefix.v = c(names(contr.v1)[-1], names(contr.bmi)), fdr.cutoff = FDR, 
+                    name=paste0("soma_FDR", 100*FDR), plot = FALSE)
 soma.sig <- rownames(soma.venn)[rowSums(abs(soma.venn)) > 0]
+soma.sig.nobmi <- rownames(soma.venn)[rowSums(abs(soma.venn[, paste0(names(contr.v1)[-1], ".sig") ])) > 0]
 soma.venn.df <- data.frame(soma.venn[soma.sig,], soma.annot[soma.sig, 1:7])
-write.csv(soma.venn.df, "soma_FDR05_venn.csv")
+write.csv(soma.venn.df, paste0("soma_FDR", 100*FDR, " _venn.csv"))
 setwd("..")
 ```
 
-A table representing a Venn diagram of proteomics using FDR = 0.05 is at  [soma_FDR05_venn.csv](./results/soma_FDR05_venn.csv).
+A table representing a Venn diagram of proteomics using FDR = `r FDR` is at [soma_FDR15_venn.csv](./results/soma_FDR15_venn.csv).
+
+A heatmap of differential proteins is at [soma_heat.pdf](./results/soma_heat.pdf).
+
+```{r somaheat}
+setwd("./figures")
+heat.mat <- data.matrix(soma.stats[soma.sig.nobmi, grep("logFC$", colnames(soma.stats))])
+labRow <- sub(";.+", "", soma.annot[rownames(heat.mat), "EntrezGeneSymbol"])
+labCol <- gsub("RYGBvsDWMat|mo\\.logFC", "", colnames(heat.mat))
+ezheat(heat.mat, labrows = labRow,  name="soma_FDR15_heat", sc="none", labcols = labCol, 
+       reorder_rows = TRUE, reorder_cols = FALSE, fontsize_row = 8, fontsize_col = 16, angle_col = "0")
+rownames(heat.mat) <- labRow
+write.csv(signif(heat.mat, 3), "../results/soma_heat.csv")
+setwd("..")
+```
+
+### Text
+
+```{r}
+soma.venn.ss <- soma.venn.df %>% filter(RYGBvsDWMat3mo.sig != 0 & RYGBvsDWMat3mo_bmi.sig != 0) %>%
+  select(RYGBvsDWMat3mo.sig, RYGBvsDWMat3mo_bmi.sig, EntrezGeneSymbol, TargetFullName)
+```
+
+We read out that the number of proteins significant:  
+* At baseline: `r sum(soma.tab$RYGBvsDWMat0mo.FDR < FDR)`  
+* At 3 mo in unadj: `r sum(soma.tab$RYGBvsDWMat3mo.FDR < FDR)`; whereas in adj: `r sum(soma.tab$RYGBvsDWMat3mo_bmi.FDR < FDR)`. In both, we have `r kable(soma.venn.ss)`  
+* After baseline correction at any time point without BMI adjustment: `r length(soma.sig.nobmi)`
 
 ## Metabolome
 
@@ -149,18 +182,54 @@ Analyze differences between groups at each time point, and these differences aft
 
 ```{r met_venns}
 setwd("./results")
-met.venn <- ezvenn(met.tab, prefix.v = names(contr.v1)[-c(1, 4)], fdr.cutoff = 0.05, name="met_FDR05", plot = FALSE)
-met.sig <- rownames(met.venn)[rowSums(abs(met.venn)) > 0]
+met.venn <- ezvenn(met.tab, prefix.v = c(names(contr.v1)[-c(1, 4)], names(contr.bmi)[-3]), fdr.cutoff = 0.15, 
+                   name="met_FDR15", plot = FALSE)
+met.venn <- met.venn[rowSums(abs(met.venn)) > 0,]
+met.sig <- rownames(met.venn)
+met.sig.nobmi <- rownames(met.venn)[rowSums(abs(met.venn[, paste0(names(contr.v1)[-c(1, 4)], ".sig") ])) > 0]
 met.venn.df <- data.frame(met.venn[met.sig,], met.annot[met.sig,])
-write.csv(met.venn.df, "met_FDR05_venn.csv")
+write.csv(met.venn.df, "met_FDR15_venn.csv")
 setwd("..")
 ```
 
-A table representing a Venn diagram of metabolomics using FDR = 0.05 is at  [met_FDR05_venn.csv](./results/met_FDR05_venn.csv).
+A table representing a Venn diagram of metabolomics using FDR = 0.15 is at  [met_FDR15_venn.csv](./results/met_FDR15_venn.csv).
+
+```{r metheat}
+setwd("./figures")
+mets.heat <- ezvenn(met.tab, prefix.v = names(contr.v1)[-c(1, 4)], fdr.cutoff = 0.05, name="met_FDR05", plot = FALSE)
+mets.heat <- rownames(mets.heat)[rowSums(abs(mets.heat)) > 0]
+heat.mat <- data.matrix(met.stats[mets.heat, grep("logFC$", colnames(met.stats))])
+labRow <- sub(";.+", "", met.annot[rownames(heat.mat), "BIOCHEMICAL"])
+labCol <- gsub("RYGBvsDWMat|mo\\.logFC", "", colnames(heat.mat))
+ezheat(heat.mat, labrows = labRow,  name="met_FDR05_heat", sc="none", labcols = labCol, 
+       reorder_rows = TRUE, reorder_cols = FALSE, fontsize_row = 8, fontsize_col = 16, angle_col = "0")
+rownames(heat.mat) <- labRow
+write.csv(signif(heat.mat, 3), "../results/met_heat.csv")
+setwd("..")
+```
+
+A heatmap of the `r nrow(heat.mat)` metabolites differential at FDR of 5% (b/c too many at 15%) is at [met_heat.pdf](./results/met_heat.pdf).
+
+### Text
+
+```{r}
+met.venn.ss <- met.venn.df %>% filter(RYGBvsDWMat3mo.sig != 0 & RYGBvsDWMat3mo_bmi.sig != 0) %>%
+  select(RYGBvsDWMat3mo.sig, RYGBvsDWMat3mo_bmi.sig, BIOCHEMICAL)
+```
+
+We read out that the number of mets significant:  
+* At baseline: `r sum(met.tab$RYGBvsDWMat0mo.FDR < FDR)`  
+* At 3 mo in unadj: `r sum(met.tab$RYGBvsDWMat3mo.FDR < FDR)`; whereas in adj: `r sum(met.tab$RYGBvsDWMat3mo_bmi.FDR < FDR)`. In both, we have `r nrow(met.venn.ss)`: `r kable(met.venn.ss)`  
+* After baseline correction at any time point without BMI adjustment: `r length(met.sig.nobmi)`  
+* at 3 years w/o BMI: `r sum(abs(met.venn$RYGBvsDWMat36mo.sig) > 0)`  
+
 
 # Differential abundance remission at 3 years within RYGB
 
+
 Analyze each person's analyte difference from baseline at 3mo between those who achieved glycemic endpoints (coded as *dmcure*) at 36mo and those who did not within RYGB.
+
+I think we should drop, because doesn’t account for beginning.
 
 ```{r dmcure}
 diff.pheno36 <- diff.pheno[grep("_36$", rownames(diff.pheno)),]
@@ -198,15 +267,65 @@ write.csv(met.dmc.df, "./results/met_dmcure_table.csv")
 
 The met table with statistics on differences is at [met_dmcure_table.csv](./results/met_dmcure_table.csv). The minimum FDR is `r signif(min(met.dmc.stats$dmcure_vs_not.FDR), 3)`.
 
-# Hitman/Lotman
+# Hitman
 
-We apply Hitman/Lotman to 12mo outcome change from baseline using change at 3mo from baseline as mediators and arm as exposure. The results of these mediation tests are written as CSVs to [results](./results/) folder using the naming convention outcome-timepoint_vs_mediator-timepoint_hitman, such as "HbA1c12_vs_soma3_hitman.csv," whose *EMY* columns hold the overall p-values and FDRs.
+We apply Hitman to 12mo outcome change from baseline using change at 3mo from baseline as mediators and arm as exposure. The results of these mediation tests are written as CSVs to [results](./results/) folder using the naming convention outcome-timepoint_vs_mediator-timepoint_hitman, such as "HbA1c12_vs_soma3_hitman.csv," whose *EMY* columns hold the overall p-values and FDRs.
 
 ## HbA1c
 
-We apply Hitman/Lotman to 12mo HbA1c change using change at 3mo from baseline in analytes and clinical parameters as mediators.
+We apply Hitman to 12mo HbA1c change using change at 3mo from baseline in analytes and clinical parameters as mediators.
 
 ```{r hm_a1c_3}
+#soma
+nms.tmp <- intersect(gsub("_3$", "", grep("_3$", colnames(diff.soma.mat), value=TRUE)), rownames(diff.pheno12))
+hm.soma <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="RYGB"), 
+                  M=diff.soma.mat[,paste0(nms.tmp, "_3")], 
+                  Y=diff.pheno12[nms.tmp, "HbA1c"])
+hm.a1c.soma.df <- data.frame(signif(hm.soma, 3), soma.annot[rownames(hm.soma),])
+write.csv(hm.a1c.soma.df, "./results/HbA1c12_vs_soma3_hitman.csv")
+#met
+nms.tmp <- intersect(gsub("_3$", "", grep("_3$", colnames(diff.met.mat), value=TRUE)), rownames(diff.pheno12))
+hm.met <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="RYGB"), M=diff.met.mat[,paste0(nms.tmp, "_3")], 
+                  Y=diff.pheno12[nms.tmp, "HbA1c"])
+hm.a1c.met.df <- data.frame(signif(hm.met, 3), met.annot[rownames(hm.met),])
+write.csv(hm.a1c.met.df, "./results/HbA1c12_vs_met3_hitman.csv")
+
+#clinical
+#remove: arm & grp not a difference; creatinine not measured at 3mo
+rm.cols <- c("arm", "grp", grep("Creatinine", colnames(diff.pheno3), value=TRUE))
+diff.pheno3 <- diff.pheno3[,setdiff(colnames(diff.pheno3), rm.cols)]
+rownames(diff.pheno3) <- gsub("_3$", "", rownames(diff.pheno3))
+diff.pheno3 <- diff.pheno3[intersect(rownames(diff.pheno3), rownames(diff.pheno12)),]
+#diff.pheno3 has TOPAZ, but TOPAZ has all NAs at 12mo
+arm.v <- setNames(as.numeric(pheno[paste0(rownames(diff.pheno3), "_0"), "arm"]=="RYGB"), nm=rownames(diff.pheno3))
+HbA1c <- setNames(diff.pheno12[rownames(diff.pheno3), "HbA1c"], nm=rownames(diff.pheno3))
+
+# ezmediate gives p=0, which is not correct, even with 10**4 simulations
+clin3.hm <- Hitman:::lotman(E=arm.v, M=t(diff.pheno3), Y=HbA1c)
+write.csv(signif(clin3.hm, 3), "./results/HbA1c12_vs_clin3_lotman.csv", na="")
+```
+
+### Compare clinical vs analytes
+
+```{r}
+hm.a1c.soma.df.ss <- hm.a1c.soma.df[hm.a1c.soma.df$EMY.p < clin3.hm[1, "EMY.p"] & 
+                                      hm.a1c.soma.df$EMY.FDR < clin3.hm[1, "EMY.FDR"],]
+pr <- rownames(hm.a1c.soma.df.ss)
+hm.soma.top <- data.frame(probe=pr, ratio3=fc2ratio(soma.stats[pr, "RYGBvsDWMat3mo.FC"]),
+                          nm=hm.a1c.soma.df.ss$TargetFullName, 
+                          EntrezGeneSymbol=hm.a1c.soma.df.ss$EntrezGeneSymbol)
+
+hm.a1c.met.df.ss <- hm.a1c.met.df[hm.a1c.met.df$EMY.p < clin3.hm[1, "EMY.p"] & 
+                                      hm.a1c.met.df$EMY.FDR < clin3.hm[1, "EMY.FDR"],]
+```
+
+The protein analytes more significant in p-value & FDR than any clinical mediator are: `r kable(hm.soma.top)`
+
+The metabolite mediators are `r hm.a1c.met.df.ss$BIOCHEMICAL`
+
+### TO DO Compare Hitman to joint significance analyte mediation
+
+```{r hm_a1c_3_js, eval=FALSE}
 #soma
 nms.tmp <- intersect(gsub("_3$", "", grep("_3$", colnames(diff.soma.mat), value=TRUE)), rownames(diff.pheno12))
 hm.soma <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="RYGB"), 
@@ -235,25 +354,6 @@ HbA1c <- setNames(diff.pheno12[rownames(diff.pheno3), "HbA1c"], nm=rownames(diff
 clin3.hm <- hitman(E=arm.v, M=t(diff.pheno3), Y=HbA1c)
 write.csv(signif(clin3.hm, 3), "./results/HbA1c12_vs_clin3_hitman.csv", na="")
 ```
-
-### Compare clinical vs analytes
-
-## HbA1c
-```{r}
-hm.a1c.soma.df.ss <- hm.a1c.soma.df[hm.a1c.soma.df$EMY.p < clin3.hm[1, "EMY.p"] & 
-                                      hm.a1c.soma.df$EMY.FDR < clin3.hm[1, "EMY.FDR"],]
-pr <- rownames(hm.a1c.soma.df.ss)
-hm.soma.top <- data.frame(probe=pr, ratio3=fc2ratio(soma.stats[pr, "RYGBvsDWMat3mo.FC"]),
-                          nm=hm.a1c.soma.df.ss$TargetFullName, 
-                          EntrezGeneSymbol=hm.a1c.soma.df.ss$EntrezGeneSymbol)
-
-hm.a1c.met.df.ss <- hm.a1c.met.df[hm.a1c.met.df$EMY.p < clin3.hm[1, "EMY.p"] & 
-                                      hm.a1c.met.df$EMY.FDR < clin3.hm[1, "EMY.FDR"],]
-```
-
-The protein analytes more significant in p-value & FDR than any clinical mediator are: `r kable(hm.soma.top)`
-
-The metabolite mediators are `r hm.a1c.met.df.ss$BIOCHEMICAL`
 
 ## HOMA-IR
 
@@ -349,7 +449,7 @@ load("data/pc9.rda")
 gr <- igraph::simplify(igraph::graph_from_edgelist(pc9, directed = FALSE))
 load("data/smpdb_gmat.rda")
 # smpdb_gmat <- smpdb_gmat[setdiff(rownames(smpdb_gmat), "CHEBI:15377"),]
-smpdb_gmt <- Gmat2gmt(smpdb_gmat)
+smpdb_gmt <- gmat2gmt(smpdb_gmat)
 ```
 
 We map ChEBI IDs in PC9 to chemical names, so that we can show the names in our network plots.
@@ -383,7 +483,7 @@ write.csv(fs.df, "results/deltadelta_t.csv")
 Run roast.
 
 ```{r roast, eval=FALSE}
-# read in objects with prepare_pame_on_o2.Rmd
+# read in objects with prepare_mesa_on_o2.Rmd
 setwd("./results")
 fs <- read.csv("deltadelta_t.csv", row.names = 1)
 G.smpdb <- Gmat2gmt(smpdb_gmat)
@@ -400,13 +500,13 @@ setwd("..")
 Roast barplot.
 
 ```{r roast_barplot, eval=FALSE}
-setwd("./results")
 #no rownames for ggplot2
-pwys <- read.csv("RYGBvsDWM_stats_nrot2e+05_roast.csv")
+pwys <- read.csv("results/RYGBvsDWM_stats_nrot2e+05_roast.csv")
 colnames(pwys) <- sub("RYGBvsDWM.Mixed.", "", colnames(pwys), fixed = TRUE)
 colnames(pwys)[1] <- "pwy.nm"
 pwys$nlog10pv <- -log10(pwys$p)
-pwys.ss <- pwys[pwys$FDR < 0.01,]
+# pwys.ss <- pwys[pwys$FDR < 0.01,]
+pwys.ss <- pwys[1:5,]
 pwys.ss$pwy.nm <- factor(pwys.ss$pwy.nm, levels=rev(pwys.ss$pwy.nm), ordered=TRUE)
 
 ggp <- ggplot(data=pwys.ss, mapping=aes(x=pwy.nm, y=nlog10pv, fill=FDR)) + geom_col() + xlab("Pathway") + theme_bw() + 
@@ -414,8 +514,7 @@ ggp <- ggplot(data=pwys.ss, mapping=aes(x=pwy.nm, y=nlog10pv, fill=FDR)) + geom_
                                                  axis.title.x=element_text(size=20), axis.text.x=element_text(size=12),
                                                  axis.text.y=element_text(size=24), axis.title.y = element_blank())
 # fig will be horizontal in paper
-ggsave("../figures/pwy_sig_barplot.pdf", ggp, width=11, height=5)
-setwd("..")
+ggsave("figures/pwy_sig_barplot.pdf", ggp, width=11, height=5)
 ```
 
 Plot Roast pwys.
@@ -447,16 +546,16 @@ plot_pwy(feat.tab = fs.z, G.pwy = smpdb_gmt[["Phospholipid Biosynthesis"]], stat
 setwd("..")
 ```
 
-# Pame
+# Mesa
 
-We apply Hitman to combined (metabolite + protein) dataset, then test Pame.
+We apply Hitman to combined (metabolite + protein) dataset, then test Mesa.
 
 ```{r}
 # diff_mat file created in gb_ww_net_integration
 diff.mat3 <- read.csv("../slimm-t2d-omics-data/soma_and_met_diff_mat.csv", row.names=1)
 ```
 
-## Pame homair
+## Mesa homair
 
 ```{r deltas.homair}
 nms.tmp <- intersect(colnames(diff.mat3), rownames(diff.pheno12)[!is.na(diff.pheno12$homair)])
@@ -475,23 +574,24 @@ hm.df <- read.csv("homair12_vs_analytes3_hitman_stats.csv", row.names = 1)
 diff.nms <- intersect(rownames(diff.pheno12)[!is.na(diff.pheno12$homair)], colnames(diff.mat3))
 exposure.v <- as.numeric(diff.pheno12[diff.nms, "arm"] == "RYGB")
 
-nperm <- 5*10**4
+nperm <- 10**3
 nm <- paste0("homair_stats_nperm", nperm)
-c(ps, fs) %<-% pame(M=diff.mat3[,diff.nms], E=exposure.v, Y=diff.pheno12[diff.nms, "homair"],
-                     Gmat=smpdb_gmat, nperm=nperm, min.nfeats=3, 
+res %<-% mesa(M=diff.mat3[,diff.nms], E=exposure.v, Y=diff.pheno12[diff.nms, "homair"],
+                     gmat=smpdb_gmat, nperm=nperm, min.nfeats=3, ret.null.mats = TRUE,
                      annot.df = hm.df[, c("EMY.p", "EMY.FDR", "CHEBI")], ncores=1, name = nm)
+
 write.csv(ps, paste0(nm, ".csv"))
 
 # feature stats from Pants non-parametric permutations
 feat.df <- data.frame(ezlimma::df_signif(fs, 3), annot=chebi.map[rownames(fs)])
-write.csv(feat.df, paste0("homair_feature_stats_nperm", nperm, "_pame.csv"))
+write.csv(feat.df, paste0("homair_feature_stats_nperm", nperm, "_mesa.csv"))
 setwd("..")
 ```
 
-## Pame HbA1c
+## Mesa HbA1c
 
-```{r deltas.HbA1c}
-setwd("./results", eval=FALSE)
+```{r deltas.HbA1c, eval=FALSE}
+setwd("./results")
 nms.tmp <- intersect(colnames(diff.mat3), rownames(diff.pheno12)[!is.na(diff.pheno12$HbA1c)])
 hm <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="RYGB"), 
              M=diff.mat3[,nms.tmp], 
@@ -504,7 +604,7 @@ exposure.v <- as.numeric(diff.pheno12[diff.nms, "arm"] == "RYGB")
 nperm <- 10**4
 nm <- paste0("HbA1c_stats_nperm", nperm)
 begin <- Sys.time()
-c(ps, fs) %<-% pame(M=diff.mat3[,diff.nms], E=exposure.v, Y=diff.pheno12[diff.nms, "HbA1c"],
+c(ps, fs) %<-% mesa(M=diff.mat3[,diff.nms], E=exposure.v, Y=diff.pheno12[diff.nms, "HbA1c"],
                      Gmat=smpdb_gmat, nperm=nperm, min.nfeats=3, 
                      annot.df = hm.df[, c("EMY.p", "EMY.FDR", "CHEBI")], ncores=1, name = nm)
 end <- Sys.time()
@@ -517,7 +617,7 @@ setwd("..")
 
 We find no significant pathways.
 
-## Pame dins030
+## Mesa dins030
 
 ```{r deltas.dins030, eval=FALSE}
 setwd("./results")
@@ -532,7 +632,7 @@ exposure.v <- as.numeric(diff.pheno12[diff.nms, "arm"] == "RYGB")
 
 nperm <- 10**4
 nm <- paste0("dins030_stats_nperm", nperm)
-c(ps, fs) %<-% pame(M=diff.mat3[,diff.nms], E=exposure.v, Y=diff.pheno12[diff.nms, "dins030"],
+c(ps, fs) %<-% mesa(M=diff.mat3[,diff.nms], E=exposure.v, Y=diff.pheno12[diff.nms, "dins030"],
                      Gmat=smpdb_gmat, nperm=nperm, min.nfeats=3, 
                      annot.df = hm.df[, c("EMY.p", "EMY.FDR", "CHEBI")], ncores=1, name = nm)
 head(ps) # min  FDR 0.21
