@@ -4,30 +4,48 @@ date: "`r Sys.Date()`"
 output: word_document
 ---
 
+```{r}
+setwd("B:/patti/gb_ww_trial/slimm-t2d-omics/")
+```
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, include=FALSE)
 options(digits=3, stringsAsFactors=FALSE)
 library(ezlimma)
-library(ezlimmaplot)
+library(Hitman)
 library(Mesa)
+
+library(dplyr)
+library(reshape2)
+library(writexl)
+source("R/melt_sim_tab.R")
 ```
 
 We validate the ability of `hitman` and `mesa` to control their false positive rate (*size*) and have high rate of detecting true positives (*power*) via simulations, where we know the truth.
 
+
 # Mediation
 
-We simulate our mediation methodsand compare them against the benchmark simulation of several mediation methods from Barfield et al. (2017), Table 1, for N=50.
 
-## Validating our simulations
+We simulate our mediation methodsand compare them against the benchmark simulation of several mediation methods from Barfield et al. (2017), Table 1, for N=50. The best performers here are the joint significance test, the mediate function, and Hitman, so we rerun this with a small dataset common in genomics with N=6. 
+
+```{r}
+nsim <- 10**4
+nsamp <- 50
+```
+
+## Validating our simulations with joint significance test
 
 We are simulating using the internal `ezlimma` function `ezlimma:::sim_barfield`. To validate that our this function provides results consistent with the simulations in Barfield et al. (2017), we compared Barfield et al.'s simulations with the joint significance test to our simulations with the joint significance test.   
 
 We implemented the joint significance test in R, available as the internal `ezlimma` function `ezlimma:::joint_signif_mediation`. We first tested that this function gave the same results as another implemention of this test in R, the funciton `mdt_simple` in package `JSmediation` (available upon reasonable request). Here, we validate that our implementation matches Barfield et al. (2017) Table 1. This calculation takes ~5 min on my desktop PC. 
 
 ```{r, eval=FALSE}
-nsim <- 10**4
-prop.sig.js <- ezlimma:::sim_barfield(med.fcn = joint_signif_mediation, b1t2.v=c(0, 0.14, 0.39), nsim = nsim)
-write.csv(prop.sig.js, paste0("./validation/sim_jointsig_nsamp50_nsim", nsim, ".csv"), na="")
+# also test js for small samples
+Joint <- Hitman:::joint_signif_mediation
+prop.sig.js <- Hitman:::sim_barfield(med.fnm = "Joint", b1t2.v=c(0, 0.14, 0.39), 
+                                      nsim = nsim, nsamp=nsamp)
+write.csv(prop.sig.js, paste0("./validation/val_hitman/sim_jointsig_nsamp", nsamp, "_nsim", nsim, ".csv"), na="")
 ```
 
 ## Hitman
@@ -35,65 +53,87 @@ write.csv(prop.sig.js, paste0("./validation/sim_jointsig_nsamp50_nsim", nsim, ".
 This calculation takes ~30 min on my desktop PC. Our simulation results are at [sim_hitman_nsamp50_nsim10000.csv](./validation/sim_hitman_nsamp50_nsim10000.csv).
 
 ```{r, eval=FALSE}
-nsim <- 10**4
-start.hit <- Sys.time()
-prop.sig.hit <- ezlimma:::sim_barfield(med.fcn = hitman, b1t2.v=c(0, 0.14, 0.39), nsim = nsim, ngene=99)
-stop.hit <- Sys.time()
-hit.time <- stop.hit-start.hit
-
-write.csv(prop.sig.hit, paste0("./validation/sim_hitman_nsamp50_nsim", nsim, ".csv"), na="")
+# t2=0.39; b1=0 < 0.05 with ngenes=2 & their SD in sim_barfield = 2
+(prop.sig.hit <- Hitman:::sim_barfield(med.fnm = "hitman", b1t2.v=c(0, 0.14, 0.39), nsim = nsim, ngene=99, 
+                                      nsamp = nsamp, verbose=TRUE))
+write.csv(prop.sig.hit, paste0("./validation/val_hitman/sim_hitman_nsamp", nsamp, "_nsim", nsim, ".csv"), na="")
 ```
 
-## Counterfactual
+## Counterfactual / potential outcomes
 
-From `mediation` package.
+From `mediation` package. This was quite slow because it resamples to estimate null distribution, so we ran it with 
+R scripts representing the below on the Linux cluster, called "O2", at Harvard Medical School for nsim=1000.
 
 ```{r, eval=FALSE}
-nsim <- 10**4
-start.med <- Sys.time()
-prop.sig.med <- ezlimma:::sim_barfield(med.fcn = ezmediation, b1t2.v=c(0, 0.14, 0.39), nsim = nsim, ngene=99)
-stop.med <- Sys.time()
-med.time <- stop.med-start.med
-
-write.csv(prop.sig.med, paste0("./validation/sim_mediation_nsamp50_nsim", nsim, ".csv"), na="")
+nsim=1000
+ezmed <- Hitman:::ezmediate
+prop.sig.med <- Hitman:::sim_barfield(med.fnm = "ezmed", b1t2.v=c(0, 0.14, 0.39), nsim = nsim, sims=nsim)
+write.csv(prop.sig.med, paste0("./validation/val_hitman/sim_mediate_nsamp50_nsim", nsim, "_nperm", nsim, ".csv"), na="")
 ```
 
+## Compile tables
+
+Compile Barfield table and output from our simulations into one matrix for N=50.
+
+```{r, eval=FALSE}
+nsamp <- 50
+# barfield <- read.csv("validation/val_hitman/barfield2017_Table1_N50.csv")
+# rownames(barfield) <- paste0(barfield[, 1], barfield[, 2])
+hit <- melt_sim_tab(read.csv("validation/val_hitman/sim_hitman_nsamp50_nsim10000.csv"), nm="Hitman")
+rownames(hit) <- paste0(hit[, 1], hit[, 2])
+js <- melt_sim_tab(read.csv("validation/val_hitman/sim_jointsig_nsamp50_nsim10000.csv"), nm="joint")
+rownames(js) <- paste0(js[, 1], js[, 2])
+med <- melt_sim_tab(read.csv("validation/val_hitman/sim_mediate_nsamp50_nsim1000_nperm1000.csv"), nm="mediate")
+rownames(med) <- paste0(med[, 1], med[, 2])
+
+stopifnot(rownames(hit)==rownames(med), rownames(hit)==rownames(js))
+comb.mat <- data.matrix(data.frame(hit, js[, -(1:2), drop=FALSE], 
+                                   med[, -(1:2), drop=FALSE]))
+comb.mat <- comb.mat[order(-rowSums(comb.mat[, 1:2]==0), rowSums(comb.mat[, 1:2])), ]
+write_xlsx(x=as.data.frame(comb.mat), "validation/val_hitman/combined_n50_sim_tab.xlsx")
+```
+
+
 # MSA
+
+
+Following Djordjilovic et al. (2018), we simulate data using the covariance matrix from the simPATHy package's chimera dataset.
 
 We simulate data to test multiple methods for Mediator Set Analysis (MSA), including our own (Mesa), & the global mediation test. For this we use our function `sim_msa`.
 
 ```{r}
 # Declare variables.
-nsample <- 8
+nsamp <- 50
 nperm <- 10**3
-nsim <- 50
+nsim <- 500
 effect.v <- 0:3
 
-load("data/smpdb_gmat.rda")
+data("gmat_hallmark_subset")
+data("chimera_cov_mat")
 ```
 
-Test mesa
+## Test mesa
 
 ```{r, eval=FALSE}
 # b/c i add 1 to avoid p=0, more nperm --> lower p
-sim.m <- Mesa::sim_msa(msea, Gmat=smpdb_gmat, nsample=nsample, nsim=nsim, nperm=nperm, effect.v = effect.v, ncores=1)
-write.csv(sim.m[1,, drop=FALSE], paste0("./validation/sim_msa_nperm", nperm, "_nsim", nsim, ".csv"), na="")
+# 10min for 5 sim
+sbm.mesa <- sim_barfield_msa(msa.fnm="mesa", cov.mat=chimera_cov_mat, gmat=gmat_hallmark_subset, b1t2.v=c(0, 0.14, 0.39),
+                        alpha=0.05, nsamp=nsamp, nsim=nsim, nperm=nperm, verbose=FALSE)
+write.csv(sbm.mesa, paste0("./validation/sim_msa_nperm", nperm, "_nsim", nsim, ".csv"), na="")
 ```
 
-Test global mediation test from Djordjilovic et al. (2018)
+## Test global mediation test from Djordjilovic et al. (2018)
 
 ```{r, eval=FALSE}
-sim.gmt <- Mesa::sim_msa(msa.fcn = global_mediation_test, Gmat=smpdb_gmat, nsample=nsample, nsim=nsim, verbose=TRUE, effect.v = effect.v)
-write.csv(sim.gmt[1,, drop=FALSE], paste0("./validation/sim_gmt_nperm", nperm, "_nsim", nsim, ".csv"), na="")
+sbm.gmt <- Mesa:::sim_barfield_msa(msa.fnm="global_mediation_test", cov.mat=chimera_cov_mat, gmat=gmat_hallmark_subset, 
+                                  b1t2.v=c(0, 0.14, 0.39), alpha=0.05, nsamp=nsamp, nsim=nsim, verbose=FALSE)
+write.csv(sbm.gmt, paste0("./validation/val_mesa/sim_gmt_nperm", nperm, "_nsim", nsim, "_nsamp", nsamp, ".csv"), na="")
 ```
 
-Run hitman fisher? better on function that can be sent to sim_msa.
+## Test Huang & Pan. 
 
-```{r, eval=FALSE}
-sfh <- ezlimma:::sim_fisher_hitman(G=g.smpdb[1:2], E = exposure, all.feats = all.feats, nsim=200, 
-                                   effect.v = c(0, 0.01), prop.other.sig = 0.25)
-head(sfh)
-```
+Downloaded their code in supp materials and used "MedTest.con.R: R code for the proposed mediation test for continuous outcome".
+
 
 # References
 Barfield R, Shen J, Just AC, Vokonas PS, Schwartz J, Baccarelli AA, VanderWeele TJ, Lin X. Testing for the indirect effect under the null for genome-wide mediation analyses. Genet Epidemiol. 2017 Dec;41(8):824-833.
