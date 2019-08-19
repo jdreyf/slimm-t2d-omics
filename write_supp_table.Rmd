@@ -20,7 +20,7 @@ Write table S2 from tables written in analyze_slimm_t2d_omics.Rmd and README to 
 setwd("./results")
 readme <- read.csv("../data/S2_readme.csv")
 soma <- read.csv("soma_supp_table.csv")
-soma.venn <- read.csv("soma_FDR05_venn.csv")
+soma.venn <- read.csv("soma_FDR15_venn.csv")
 soma.dmcure <- read.csv("soma_dmcure_table.csv")
 
 met <- read.csv("met_supp_table.csv")
@@ -29,15 +29,11 @@ met.dmcure <- read.csv("met_dmcure_table.csv")
 
 soma.met.cor <- read.csv("soma_met_corr_coeffs.csv")
 
-pants.by.grp <- read.csv("absdeltadelta_stats_nperm50000_pants.csv")
-pants.p3 <- read.csv("absdeltadelta_stats_nperm50000_p3_pants.csv")
-roast.by.grp <- read.csv("deltadelta_stats_nperm50000_mroast.csv")
-gsea.rygb <- read.csv("../data/gsea_report_for_RYGB.csv")
-gsea.dwm <- read.csv("../data/gsea_report_for_DWM.csv")
+roast.by.grp <- read.csv("RYGBvsDWM_nrot2e+05_mroast/RYGBvsDWM_nrot2e+05_mroast.csv")
 
 hm.soma.HbA1c <- read.csv("HbA1c12_vs_soma3_hitman.csv")
 hm.met.HbA1c <- read.csv("HbA1c12_vs_met3_hitman.csv")
-lm.clin3.HbA1c <- read.csv("HbA1c12_vs_clin3_lotman.csv")
+hm.clin3.HbA1c <- read.csv("HbA1c12_vs_clin3_hitman.csv")
 
 hm.soma.dins030 <- read.csv("dins030_12_vs_soma3_hitman.csv")
 hm.met.dins030 <- read.csv("dins030_12_vs_met3_hitman.csv")
@@ -45,8 +41,8 @@ hm.met.dins030 <- read.csv("dins030_12_vs_met3_hitman.csv")
 hm.soma.homair <- read.csv("homair12_vs_soma3_hitman.csv")
 hm.met.homair <- read.csv("homair12_vs_met3_hitman.csv")
 
-pa.hm.homair <- ezlimma::read_linked_xl("homair_stats_nperm50000_pants_hitman/homair_stats_nperm50000_pants_hitman.xlsx")
-pa.hm.homair <- data.frame(X=rownames(pa.hm.homair), pa.hm.homair)
+mesa.homair <- ezlimma::read_linked_xl("homair_stats_nperm10000_mesa/homair_stats_nperm10000_mesa.xlsx")
+mesa.homair <- data.frame(X=rownames(mesa.homair), mesa.homair)
 setwd("..")
 ```
 
@@ -54,12 +50,10 @@ setwd("..")
 xx <- list(README=readme, 
            SOMAscan=soma, Soma_sig=soma.venn, Soma_dmcure=soma.dmcure,
            Metabolites=met, Met_sig=met.venn, Met_dmcure=met.dmcure,
-           Soma_met_r=soma.met.cor, Pants_between_arm=pants.by.grp, 
-           Pants_between_arm_p3=pants.p3, Roast_between_arm=roast.by.grp,
-           GSEA_RYGB=gsea.rygb, GSEA_DWM=gsea.dwm,
-           Hitman_soma_HbA1c=hm.soma.HbA1c, Hitman_met_HbA1c=hm.met.HbA1c, Lotman_clin_HbA1c=lm.clin3.HbA1c, 
+           Soma_met_r=soma.met.cor, Roast_between_arm=roast.by.grp,
+           Hitman_soma_HbA1c=hm.soma.HbA1c, Hitman_met_HbA1c=hm.met.HbA1c, Hitman_clin_HbA1c=hm.clin3.HbA1c, 
            Hitman_soma_dins030=hm.soma.dins030, Hitman_met_dins030=hm.met.dins030, 
-           Hitman_soma_homair=hm.soma.homair, Hitman_met_homair=hm.met.homair, Hitman_Pants_homair=pa.hm.homair)
+           Hitman_soma_homair=hm.soma.homair, Hitman_met_homair=hm.met.homair, Mesa_homair=mesa.homair)
 
 #get rid of X in top-left corner
 xx[-1] <- lapply(xx[-1], FUN = function(xx.tmp){
