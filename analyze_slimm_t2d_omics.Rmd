@@ -301,8 +301,8 @@ arm.v <- setNames(as.numeric(pheno[paste0(rownames(diff.pheno3), "_0"), "arm"]==
 HbA1c <- setNames(diff.pheno12[rownames(diff.pheno3), "HbA1c"], nm=rownames(diff.pheno3))
 
 # ezmediate gives p=0, which is not correct, even with 10**4 simulations
-clin3.hm <- Hitman:::lotman(E=arm.v, M=t(diff.pheno3), Y=HbA1c)
-write.csv(signif(clin3.hm, 3), "./results/HbA1c12_vs_clin3_lotman.csv", na="")
+clin3.hm <- Hitman:::hitman(E=arm.v, M=t(diff.pheno3), Y=HbA1c)
+write.csv(signif(clin3.hm, 3), "./results/HbA1c12_vs_clin3_hitman.csv", na="")
 ```
 
 ### Compare clinical vs analytes
@@ -339,20 +339,6 @@ hm.met <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="RYGB"), M=diff.met.
                   Y=diff.pheno12[nms.tmp, "HbA1c"])
 hm.a1c.met.df <- data.frame(signif(hm.met, 3), met.annot[rownames(hm.met),])
 write.csv(hm.a1c.met.df, "./results/HbA1c12_vs_met3_hitman.csv")
-
-#clinical
-#remove: arm & grp not a difference; creatinine not measured at 3mo
-rm.cols <- c("arm", "grp", grep("Creatinine", colnames(diff.pheno3), value=TRUE))
-diff.pheno3 <- diff.pheno3[,setdiff(colnames(diff.pheno3), rm.cols)]
-rownames(diff.pheno3) <- gsub("_3$", "", rownames(diff.pheno3))
-diff.pheno3 <- diff.pheno3[intersect(rownames(diff.pheno3), rownames(diff.pheno12)),]
-#diff.pheno3 has TOPAZ, but TOPAZ has all NAs at 12mo
-arm.v <- setNames(as.numeric(pheno[paste0(rownames(diff.pheno3), "_0"), "arm"]=="RYGB"), nm=rownames(diff.pheno3))
-HbA1c <- setNames(diff.pheno12[rownames(diff.pheno3), "HbA1c"], nm=rownames(diff.pheno3))
-
-# ezmediate gives p=0, which is not correct, even with 10**4 simulations
-clin3.hm <- hitman(E=arm.v, M=t(diff.pheno3), Y=HbA1c)
-write.csv(signif(clin3.hm, 3), "./results/HbA1c12_vs_clin3_hitman.csv", na="")
 ```
 
 ## HOMA-IR
@@ -501,7 +487,7 @@ Roast barplot.
 
 ```{r roast_barplot, eval=FALSE}
 #no rownames for ggplot2
-pwys <- read.csv("results/RYGBvsDWM_stats_nrot2e+05_roast.csv")
+pwys <- read.csv("results/RYGBvsDWM_nrot2e+05_mroast/RYGBvsDWM_nrot2e+05_mroast.csv")
 colnames(pwys) <- sub("RYGBvsDWM.Mixed.", "", colnames(pwys), fixed = TRUE)
 colnames(pwys)[1] <- "pwy.nm"
 pwys$nlog10pv <- -log10(pwys$p)
