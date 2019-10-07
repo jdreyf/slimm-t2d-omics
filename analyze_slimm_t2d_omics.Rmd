@@ -224,43 +224,6 @@ We read out that the number of mets significant:
 * at 3 years w/o BMI: `r sum(abs(met.venn$RYGBvsDWMat36mo.sig) > 0)`  
 
 
-<!-- # Differential abundance remission at 3 years within RYGB -->
-
-
-<!-- Analyze each person's analyte difference from baseline at 3mo between those who achieved glycemic endpoints (coded as *dmcure*) at 36mo and those who did not within RYGB. I think we should drop, because doesn’t account for beginning. -->
-
-```{r dmcure, eval=FALSE}
-diff.pheno36 <- diff.pheno[grep("_36$", rownames(diff.pheno)),]
-# code 9 indicates NA
-diff.pheno36$dmcure[diff.pheno36$dmcure==9] <- NA
-diff.pheno36 <- diff.pheno36[!is.na(diff.pheno36$dmcure),]
-rownames(diff.pheno36) <- gsub("_36$", "", rownames(diff.pheno36))
-
-dp36.rygb <- diff.pheno36[diff.pheno36$arm=="RYGB",]
-dp36.rygb$dmcure.char <- ifelse(dp36.rygb$dmcure, "dmcure", "not_dmcure")
-contr.dmc <- c(dmcure_vs_not="dmcure-not_dmcure")
-```
-
-```{r soma dmcure ezl, eval=FALSE}
-nms.tmp <- intersect(gsub("_3$", "", grep("_3$", colnames(diff.soma.mat), value=TRUE)), rownames(dp36.rygb))
-soma.dmc.stats <- limma_contrasts(diff.soma.mat[,paste0(nms.tmp, "_3")], grp=dp36.rygb[nms.tmp, "dmcure.char"], 
-                                  contrast.v = contr.dmc)
-soma.dmc.df <- data.frame(signif(soma.dmc.stats, 3), soma.annot[rownames(soma.dmc.stats),])
-write.csv(soma.dmc.df, "./results/soma_dmcure_table.csv")
-```
-
-<!-- The Soma table with statistics on differences in remission is at [soma_dmcure_table.csv](./results/soma_dmcure_table.csv). The minimum FDR is `r signif(min(soma.dmc.stats$dmcure_vs_not.FDR), 3)`. -->
-
-```{r met dmcure ezl, eval=FALSE}
-nms.tmp <- intersect(gsub("_3$", "", grep("_3$", colnames(diff.met.mat), value=TRUE)), rownames(dp36.rygb))
-met.dmc.stats <- limma_contrasts(diff.met.mat[,paste0(nms.tmp, "_3")], grp=dp36.rygb[nms.tmp, "dmcure.char"], 
-                                  contrast.v = contr.dmc)
-met.dmc.df <- data.frame(signif(met.dmc.stats, 3), met.annot[rownames(met.dmc.stats),])
-write.csv(met.dmc.df, "./results/met_dmcure_table.csv")
-```
-
-<!-- The met table with statistics on differences is at [met_dmcure_table.csv](./results/met_dmcure_table.csv). The minimum FDR is `r signif(min(met.dmc.stats$dmcure_vs_not.FDR), 3)`. -->
-
 # Hitman
 
 We apply Hitman to 12mo outcome change from baseline using change at 3mo from baseline as mediators and arm as exposure. The results of these mediation tests are written as CSVs to [results](./results/) folder using the naming convention outcome-timepoint_vs_mediator-timepoint_hitman, such as "HbA1c12_vs_soma3_hitman.csv," whose *EMY* columns hold the overall p-values and FDRs, and corresponding chi-squared on 1 degree of freedom, where larger is more significant.
@@ -566,8 +529,8 @@ hm <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="RYGB"),
 hm.df <- data.frame(signif(hm, 3), CHEBI=chebi.map[rownames(hm)])
 write.csv(hm.df, "homair12_vs_analytes3_hitman_stats.csv")
 
-hm.df[is.na(hm.df[, "EMY.z"]), "EMY.z"] <- -10**2
-cam.homair <- ezcamerapr(stats.tab=hm.df[, "EMY.z", drop=FALSE], G=smpdb_gmt, feat.tab=hm.df, alternative = "greater",
+hm.df[is.na(hm.df[, "EMY.chisq"]), "EMY.chisq"] <- 0
+cam.homair <- ezcamerapr(stats.tab=hm.df[, "EMY.chisq", drop=FALSE], G=smpdb_gmt, feat.tab=hm.df, alternative = "greater",
                          inter.gene.cor = igc, name="homair")
 setwd("..")
 ```
@@ -587,8 +550,8 @@ hm.df <- data.frame(signif(hm, 3), CHEBI=chebi.map[rownames(hm)])
 diff.nms <- intersect(rownames(diff.pheno12)[!is.na(diff.pheno12$HbA1c)], colnames(diff.mat3))
 exposure.v <- as.numeric(diff.pheno12[diff.nms, "arm"] == "RYGB")
 
-hm.df[is.na(hm.df[, "EMY.z"]), "EMY.z"] <- -10**2
-cam.a1c  <- ezcamerapr(stats.tab=hm.df[, "EMY.z", drop=FALSE], G=smpdb_gmt, feat.tab=hm.df, alternative = "greater",
+hm.df[is.na(hm.df[, "EMY.chisq"]), "EMY.chisq"] <- 0
+cam.a1c  <- ezcamerapr(stats.tab=hm.df[, "EMY.chisq", drop=FALSE], G=smpdb_gmt, feat.tab=hm.df, alternative = "greater",
                        inter.gene.cor = igc)
 setwd("..")
 ```
@@ -608,8 +571,8 @@ hm.df <- data.frame(signif(hm, 3), CHEBI=chebi.map[rownames(hm)])
 diff.nms <- intersect(rownames(diff.pheno12)[!is.na(diff.pheno12$dins030)], colnames(diff.mat3))
 exposure.v <- as.numeric(diff.pheno12[diff.nms, "arm"] == "RYGB")
 
-hm.df[is.na(hm.df[, "EMY.z"]), "EMY.z"] <- -10**2
-cam.dins  <- ezcamerapr(gstats=hm.df[, "EMY.z", drop=FALSE], G=smpdb_gmt, feat.tab=hm.df, alternative = "greater",
+hm.df[is.na(hm.df[, "EMY.chisq"]), "EMY.chisq"] <- 0
+cam.dins  <- ezcamerapr(gstats=hm.df[, "EMY.chisq", drop=FALSE], G=smpdb_gmt, feat.tab=hm.df, alternative = "greater",
                         inter.gene.cor = igc, name="dins30")
 setwd("..")
 ```

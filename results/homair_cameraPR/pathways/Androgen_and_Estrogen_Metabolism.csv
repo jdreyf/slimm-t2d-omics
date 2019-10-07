@@ -1,5 +1,5 @@
-"","EMY.z","EMY.p","EMY.FDR","EM.z","EM.p","MY.z","MY.p","CHEBI"
-"CHEBI:16814",0.97,0.166,1,-1.66,0.0972,0.97,0.332,"dehydroisoandrosterone sulfate (DHEA-S)"
-"HSD17B1",0.152,0.44,1,0.152,0.879,-1.37,0.172,NA
-"CHEBI:17627",-100,1,1,-1.29,0.198,-1.79,0.0739,"heme"
-"CHEBI:16189",-100,1,1,-1.8,0.0723,-0.53,0.596,"sulfate*"
+"","EMY.chisq","EMY.p","EMY.FDR","EM.z","EM.p","MY.z","MY.p","CHEBI"
+"CHEBI:16814",1.92,0.166,1,-1.66,0.0972,0.97,0.332,"dehydroisoandrosterone sulfate (DHEA-S)"
+"HSD17B1",0.597,0.44,1,0.152,0.879,-1.37,0.172,NA
+"CHEBI:17627",0,1,1,-1.29,0.198,-1.79,0.0739,"heme"
+"CHEBI:16189",0,1,1,-1.8,0.0723,-0.53,0.596,"sulfate*"

@@ -1,8 +1,8 @@
-"","EMY.z","EMY.p","EMY.FDR","EM.z","EM.p","MY.z","MY.p","CHEBI"
-"CHEBI:32816",1.1,0.136,1,-1.1,0.271,1.17,0.241,"pyruvate"
-"CHEBI:30915",0.741,0.229,1,-0.741,0.459,1.19,0.234,"alpha-ketoglutarate"
-"CHEBI:16015",0.0875,0.465,1,-0.428,0.669,0.0875,0.93,"glutamate"
-"CHEBI:16027",-100,1,1,-1.09,0.276,-1.83,0.0675,"adenosine 5'-monophosphate (AMP)"
-"CHEBI:17561",-100,1,1,2.06,0.0396,1.47,0.141,"cysteine"
-"GOT1",-100,1,1,2.35,0.0185,1.09,0.277,NA
-"CHEBI:41721",-100,1,1,-1.89,0.059,-1.05,0.295,"cysteine sulfinic acid"
+"","EMY.chisq","EMY.p","EMY.FDR","EM.z","EM.p","MY.z","MY.p","CHEBI"
+"CHEBI:32816",2.23,0.136,1,-1.1,0.271,1.17,0.241,"pyruvate"
+"CHEBI:30915",1.44,0.229,1,-0.741,0.459,1.19,0.234,"alpha-ketoglutarate"
+"CHEBI:16015",0.534,0.465,1,-0.428,0.669,0.0875,0.93,"glutamate"
+"CHEBI:16027",0,1,1,-1.09,0.276,-1.83,0.0675,"adenosine 5'-monophosphate (AMP)"
+"CHEBI:17561",0,1,1,2.06,0.0396,1.47,0.141,"cysteine"
+"GOT1",0,1,1,2.35,0.0185,1.09,0.277,NA
+"CHEBI:41721",0,1,1,-1.89,0.059,-1.05,0.295,"cysteine sulfinic acid"
