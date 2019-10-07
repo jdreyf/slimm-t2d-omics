@@ -224,14 +224,12 @@ We read out that the number of mets significant:
 * at 3 years w/o BMI: `r sum(abs(met.venn$RYGBvsDWMat36mo.sig) > 0)`  
 
 
-# Differential abundance remission at 3 years within RYGB
+<!-- # Differential abundance remission at 3 years within RYGB -->
 
 
-Analyze each person's analyte difference from baseline at 3mo between those who achieved glycemic endpoints (coded as *dmcure*) at 36mo and those who did not within RYGB.
+<!-- Analyze each person's analyte difference from baseline at 3mo between those who achieved glycemic endpoints (coded as *dmcure*) at 36mo and those who did not within RYGB. I think we should drop, because doesn’t account for beginning. -->
 
-I think we should drop, because doesn’t account for beginning.
-
-```{r dmcure}
+```{r dmcure, eval=FALSE}
 diff.pheno36 <- diff.pheno[grep("_36$", rownames(diff.pheno)),]
 # code 9 indicates NA
 diff.pheno36$dmcure[diff.pheno36$dmcure==9] <- NA
@@ -243,9 +241,7 @@ dp36.rygb$dmcure.char <- ifelse(dp36.rygb$dmcure, "dmcure", "not_dmcure")
 contr.dmc <- c(dmcure_vs_not="dmcure-not_dmcure")
 ```
 
-## Proteome
-
-```{r soma dmcure ezl}
+```{r soma dmcure ezl, eval=FALSE}
 nms.tmp <- intersect(gsub("_3$", "", grep("_3$", colnames(diff.soma.mat), value=TRUE)), rownames(dp36.rygb))
 soma.dmc.stats <- limma_contrasts(diff.soma.mat[,paste0(nms.tmp, "_3")], grp=dp36.rygb[nms.tmp, "dmcure.char"], 
                                   contrast.v = contr.dmc)
@@ -253,11 +249,9 @@ soma.dmc.df <- data.frame(signif(soma.dmc.stats, 3), soma.annot[rownames(soma.dm
 write.csv(soma.dmc.df, "./results/soma_dmcure_table.csv")
 ```
 
-The Soma table with statistics on differences in remission is at [soma_dmcure_table.csv](./results/soma_dmcure_table.csv). The minimum FDR is `r signif(min(soma.dmc.stats$dmcure_vs_not.FDR), 3)`.
+<!-- The Soma table with statistics on differences in remission is at [soma_dmcure_table.csv](./results/soma_dmcure_table.csv). The minimum FDR is `r signif(min(soma.dmc.stats$dmcure_vs_not.FDR), 3)`. -->
 
-## Metabolome
-
-```{r met dmcure ezl}
+```{r met dmcure ezl, eval=FALSE}
 nms.tmp <- intersect(gsub("_3$", "", grep("_3$", colnames(diff.met.mat), value=TRUE)), rownames(dp36.rygb))
 met.dmc.stats <- limma_contrasts(diff.met.mat[,paste0(nms.tmp, "_3")], grp=dp36.rygb[nms.tmp, "dmcure.char"], 
                                   contrast.v = contr.dmc)
@@ -265,11 +259,11 @@ met.dmc.df <- data.frame(signif(met.dmc.stats, 3), met.annot[rownames(met.dmc.st
 write.csv(met.dmc.df, "./results/met_dmcure_table.csv")
 ```
 
-The met table with statistics on differences is at [met_dmcure_table.csv](./results/met_dmcure_table.csv). The minimum FDR is `r signif(min(met.dmc.stats$dmcure_vs_not.FDR), 3)`.
+<!-- The met table with statistics on differences is at [met_dmcure_table.csv](./results/met_dmcure_table.csv). The minimum FDR is `r signif(min(met.dmc.stats$dmcure_vs_not.FDR), 3)`. -->
 
 # Hitman
 
-We apply Hitman to 12mo outcome change from baseline using change at 3mo from baseline as mediators and arm as exposure. The results of these mediation tests are written as CSVs to [results](./results/) folder using the naming convention outcome-timepoint_vs_mediator-timepoint_hitman, such as "HbA1c12_vs_soma3_hitman.csv," whose *EMY* columns hold the overall p-values and FDRs.
+We apply Hitman to 12mo outcome change from baseline using change at 3mo from baseline as mediators and arm as exposure. The results of these mediation tests are written as CSVs to [results](./results/) folder using the naming convention outcome-timepoint_vs_mediator-timepoint_hitman, such as "HbA1c12_vs_soma3_hitman.csv," whose *EMY* columns hold the overall p-values and FDRs, and corresponding chi-squared on 1 degree of freedom, where larger is more significant.
 
 ## HbA1c
 
@@ -323,23 +317,31 @@ The protein analytes more significant in p-value & FDR than any clinical mediato
 
 The metabolite mediators are `r hm.a1c.met.df.ss$BIOCHEMICAL`
 
-### TO DO Compare Hitman to joint significance analyte mediation
+### Compare Hitman to joint significance analyte mediation
 
-```{r hm_a1c_3_js, eval=FALSE}
+```{r hm_a1c_3_js}
 #soma
 nms.tmp <- intersect(gsub("_3$", "", grep("_3$", colnames(diff.soma.mat), value=TRUE)), rownames(diff.pheno12))
-hm.soma <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="RYGB"), 
-                  M=diff.soma.mat[,paste0(nms.tmp, "_3")], 
-                  Y=diff.pheno12[nms.tmp, "HbA1c"])
-hm.a1c.soma.df <- data.frame(signif(hm.soma, 3), soma.annot[rownames(hm.soma),])
-write.csv(hm.a1c.soma.df, "./results/HbA1c12_vs_soma3_hitman.csv")
+
+js.soma <- apply(data.matrix(diff.soma.mat[, paste0(nms.tmp, "_3")]), MARGIN = 1, FUN=function(M){
+  tmp <- Hitman:::joint_signif_mediation(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="RYGB"), 
+                                           M=as.numeric(M), Y=diff.pheno12[nms.tmp, "HbA1c"])
+  
+})
+js.a1c.soma.df <- data.frame(EMY.p=signif(js.soma, 3), EMY.FDR=p.adjust(js.soma, method = "fdr"), soma.annot[rownames(diff.soma.mat),])
+write.csv(js.a1c.soma.df, "./results/HbA1c12_vs_soma3_jointsignif.csv")
 #met
 nms.tmp <- intersect(gsub("_3$", "", grep("_3$", colnames(diff.met.mat), value=TRUE)), rownames(diff.pheno12))
-hm.met <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="RYGB"), M=diff.met.mat[,paste0(nms.tmp, "_3")], 
-                  Y=diff.pheno12[nms.tmp, "HbA1c"])
-hm.a1c.met.df <- data.frame(signif(hm.met, 3), met.annot[rownames(hm.met),])
-write.csv(hm.a1c.met.df, "./results/HbA1c12_vs_met3_hitman.csv")
+js.met <- apply(data.matrix(diff.met.mat[, paste0(nms.tmp, "_3")]), MARGIN = 1, FUN=function(M){
+  tmp <- Hitman:::joint_signif_mediation(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="RYGB"), 
+                                           M=as.numeric(M), Y=diff.pheno12[nms.tmp, "HbA1c"])
+  
+})
+js.a1c.met.df <- data.frame(EMY.p=signif(js.met, 3), EMY.FDR=p.adjust(js.met, method = "fdr"), met.annot[rownames(diff.met.mat),])
+write.csv(js.a1c.met.df, "./results/HbA1c12_vs_met3_jointsignif.csv")
 ```
+
+Top analytes: GHR has FDR `r signif(js.a1c.soma.df["SL005168", "EMY.FDR"], 2)` & pro-hydroxy-pro has FDR `r signif(js.a1c.met.df["C35127", "EMY.FDR"], 2)`.
 
 ## HOMA-IR
 

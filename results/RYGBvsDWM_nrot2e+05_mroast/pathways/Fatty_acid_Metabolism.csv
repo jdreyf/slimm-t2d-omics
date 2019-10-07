@@ -1,0 +1,4 @@
+"","DWM.avg","RYGB.avg","RYGBvsDWM.t","RYGBvsDWM.p","RYGBvsDWM.FDR","CHEBI"
+"CHEBI:17490",0.2056,0.5174,2.873,0.006786,0.1907,"palmitoylcarnitine"
+"CHEBI:16027",0.4007,-0.2448,-1.214,0.2328,0.5428,"adenosine 5'-monophosphate (AMP)"
+"CHEBI:15756",0.2007,0.06942,-1.156,0.2551,0.5536,"palmitate (16:0)"

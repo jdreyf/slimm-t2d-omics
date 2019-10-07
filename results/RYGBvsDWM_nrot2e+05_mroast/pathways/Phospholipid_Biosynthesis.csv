@@ -1,0 +1,5 @@
+"","DWM.avg","RYGB.avg","RYGBvsDWM.t","RYGBvsDWM.p","RYGBvsDWM.FDR","CHEBI"
+"CHEBI:15354",-0.105,-0.7361,-6.132,4.675e-07,0.0002512,"choline"
+"CHEBI:18132",0.04932,-0.514,-2.656,0.01172,0.2444,"choline phosphate"
+"CHEBI:15799",-0.3774,0.483,1.534,0.1339,0.5428,"1-palmitoyl-GPA (16:0)"
+"CHEBI:15978",-0.0694,-0.2512,-0.8472,0.4025,0.632,"glycerol 3-phosphate"

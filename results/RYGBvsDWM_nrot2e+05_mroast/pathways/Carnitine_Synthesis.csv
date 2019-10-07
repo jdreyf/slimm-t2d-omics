@@ -1,0 +1,7 @@
+"","DWM.avg","RYGB.avg","RYGBvsDWM.t","RYGBvsDWM.p","RYGBvsDWM.FDR","CHEBI"
+"CHEBI:15741",0.1046,-0.06975,-1.779,0.0837,0.4785,"succinate"
+"CHEBI:16680",0.3041,-0.4946,-1.75,0.08875,0.4868,"S-adenosylhomocysteine (SAH)"
+"CHEBI:1941",0.03845,-0.1375,-1.616,0.1149,0.5298,"deoxycarnitine"
+"CHEBI:15428",0.1964,0.329,1.453,0.1549,0.5428,"glycine"
+"CHEBI:18019",-0.0641,-0.1367,-1.126,0.2675,0.5581,"lysine"
+"CHEBI:30915",-0.1733,-0.2127,-0.3826,0.7042,0.836,"alpha-ketoglutarate"

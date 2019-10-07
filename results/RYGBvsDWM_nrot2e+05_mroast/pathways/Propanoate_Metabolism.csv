@@ -1,0 +1,7 @@
+"","DWM.avg","RYGB.avg","RYGBvsDWM.t","RYGBvsDWM.p","RYGBvsDWM.FDR","CHEBI"
+"CHEBI:16414",-0.1026,-0.3973,-3.547,0.001106,0.04761,"valine"
+"CHEBI:30860",-0.04205,-0.3874,-2.114,0.0415,0.3884,"methylmalonate (MMA)"
+"CHEBI:16027",0.4007,-0.2448,-1.214,0.2328,0.5428,"adenosine 5'-monophosphate (AMP)"
+"CHEBI:16015",-0.2246,-0.3188,-0.4112,0.6834,0.8185,"glutamate"
+"CHEBI:30915",-0.1733,-0.2127,-0.3826,0.7042,0.836,"alpha-ketoglutarate"
+"CHEBI:16958",0.01995,0.006097,-0.09345,0.9261,0.9647,"beta-alanine"

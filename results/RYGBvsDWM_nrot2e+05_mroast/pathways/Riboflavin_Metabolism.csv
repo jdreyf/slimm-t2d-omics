@@ -1,0 +1,5 @@
+"","DWM.avg","RYGB.avg","RYGBvsDWM.t","RYGBvsDWM.p","RYGBvsDWM.FDR","CHEBI"
+"ACP1",0.3721,-0.1446,-1.318,0.1959,0.5428,NA
+"CHEBI:16027",0.4007,-0.2448,-1.214,0.2328,0.5428,"adenosine 5'-monophosphate (AMP)"
+"CHEBI:17594",-0.3724,0.2043,0.9282,0.3595,0.6007,"hydroquinone sulfate"
+"CHEBI:18367",0.05635,0.009885,-0.862,0.3944,0.6286,"phosphate"

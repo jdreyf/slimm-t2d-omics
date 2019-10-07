@@ -1,0 +1,4 @@
+"","DWM.avg","RYGB.avg","RYGBvsDWM.t","RYGBvsDWM.p","RYGBvsDWM.FDR","CHEBI"
+"CHEBI:7916",0.3185,0.8891,2.586,0.0139,0.2587,"pantothenate"
+"CHEBI:17561",-0.1601,0.02385,2.045,0.04821,0.4024,"cysteine"
+"CHEBI:16027",0.4007,-0.2448,-1.214,0.2328,0.5428,"adenosine 5'-monophosphate (AMP)"

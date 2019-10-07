@@ -1,0 +1,4 @@
+"","DWM.avg","RYGB.avg","RYGBvsDWM.t","RYGBvsDWM.p","RYGBvsDWM.FDR","CHEBI"
+"GAPDH",0.1771,-0.2366,-1.675,0.1027,0.5085,NA
+"CHEBI:17594",-0.3724,0.2043,0.9282,0.3595,0.6007,"hydroquinone sulfate"
+"CHEBI:15978",-0.0694,-0.2512,-0.8472,0.4025,0.632,"glycerol 3-phosphate"

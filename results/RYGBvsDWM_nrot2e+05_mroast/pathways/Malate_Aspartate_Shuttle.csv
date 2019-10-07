@@ -1,0 +1,4 @@
+"","DWM.avg","RYGB.avg","RYGBvsDWM.t","RYGBvsDWM.p","RYGBvsDWM.FDR","CHEBI"
+"CHEBI:17053",0.00747,-0.2782,-1.304,0.2005,0.5428,"aspartate"
+"CHEBI:16015",-0.2246,-0.3188,-0.4112,0.6834,0.8185,"glutamate"
+"CHEBI:30915",-0.1733,-0.2127,-0.3826,0.7042,0.836,"alpha-ketoglutarate"

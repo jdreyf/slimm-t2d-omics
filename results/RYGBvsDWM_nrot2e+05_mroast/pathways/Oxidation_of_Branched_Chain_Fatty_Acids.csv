@@ -1,0 +1,4 @@
+"","DWM.avg","RYGB.avg","RYGBvsDWM.t","RYGBvsDWM.p","RYGBvsDWM.FDR","CHEBI"
+"CHEBI:28867",-0.1576,-0.8131,-5.243,7.188e-06,0.001237,"propionylcarnitine"
+"CHEBI:15741",0.1046,-0.06975,-1.779,0.0837,0.4785,"succinate"
+"CHEBI:30915",-0.1733,-0.2127,-0.3826,0.7042,0.836,"alpha-ketoglutarate"

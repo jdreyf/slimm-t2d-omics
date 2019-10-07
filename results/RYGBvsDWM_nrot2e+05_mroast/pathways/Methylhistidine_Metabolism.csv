@@ -1,0 +1,4 @@
+"","DWM.avg","RYGB.avg","RYGBvsDWM.t","RYGBvsDWM.p","RYGBvsDWM.FDR","CHEBI"
+"CHEBI:15971",-0.003164,-0.2177,-4.694,3.833e-05,0.00377,"histidine"
+"CHEBI:16680",0.3041,-0.4946,-1.75,0.08875,0.4868,"S-adenosylhomocysteine (SAH)"
+"CHEBI:27596",-0.5083,-0.3043,0.569,0.5729,0.747,"1-methylhistidine"

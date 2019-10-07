@@ -1,0 +1,4 @@
+"","DWM.avg","RYGB.avg","RYGBvsDWM.t","RYGBvsDWM.p","RYGBvsDWM.FDR","CHEBI"
+"CHEBI:15741",0.1046,-0.06975,-1.779,0.0837,0.4785,"succinate"
+"CHEBI:15344",0.8248,1.778,1.725,0.09307,0.4914,"acetoacetate"
+"CHEBI:16027",0.4007,-0.2448,-1.214,0.2328,0.5428,"adenosine 5'-monophosphate (AMP)"

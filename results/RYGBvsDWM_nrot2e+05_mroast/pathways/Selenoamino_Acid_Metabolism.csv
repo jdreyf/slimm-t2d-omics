@@ -1,0 +1,6 @@
+"","DWM.avg","RYGB.avg","RYGBvsDWM.t","RYGBvsDWM.p","RYGBvsDWM.FDR","CHEBI"
+"CHEBI:16977",-0.1078,-0.3544,-2.281,0.02858,0.3446,"alanine"
+"CHEBI:17115",0.111,0.2518,1.793,0.08147,0.4774,"serine"
+"CHEBI:16027",0.4007,-0.2448,-1.214,0.2328,0.5428,"adenosine 5'-monophosphate (AMP)"
+"CHEBI:30831",0.135,-0.1438,-0.8705,0.3898,0.6278,"alpha-ketobutyrate"
+"CHEBI:16335",0.1584,-0.09182,-0.5088,0.614,0.7707,"adenosine"

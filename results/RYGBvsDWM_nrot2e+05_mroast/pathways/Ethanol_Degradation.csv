@@ -1,0 +1,4 @@
+"","DWM.avg","RYGB.avg","RYGBvsDWM.t","RYGBvsDWM.p","RYGBvsDWM.FDR","CHEBI"
+"CHEBI:17627",0.8245,-0.3491,-1.412,0.1665,0.5428,"heme"
+"CHEBI:16027",0.4007,-0.2448,-1.214,0.2328,0.5428,"adenosine 5'-monophosphate (AMP)"
+"CAT",0.5508,-0.05763,-1.21,0.2342,0.5428,NA

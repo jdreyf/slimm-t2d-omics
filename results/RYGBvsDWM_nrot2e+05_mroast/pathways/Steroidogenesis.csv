@@ -1,0 +1,4 @@
+"","DWM.avg","RYGB.avg","RYGBvsDWM.t","RYGBvsDWM.p","RYGBvsDWM.FDR","CHEBI"
+"CHEBI:17627",0.8245,-0.3491,-1.412,0.1665,0.5428,"heme"
+"CHEBI:16962",0.02147,-0.2399,-1.283,0.2078,0.5428,"cortisone"
+"CHEBI:28043",0.1385,0.8051,1.058,0.2973,0.567,"21-hydroxypregnenolone disulfate"

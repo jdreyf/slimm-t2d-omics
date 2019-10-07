@@ -1,0 +1,5 @@
+"","DWM.avg","RYGB.avg","RYGBvsDWM.t","RYGBvsDWM.p","RYGBvsDWM.FDR","CHEBI"
+"CHEBI:16610",0.3957,-0.1955,-1.345,0.1869,0.5428,"spermidine"
+"CHEBI:16643",0.01027,-0.08693,-1.111,0.2742,0.5611,"methionine"
+"CHEBI:18367",0.05635,0.009885,-0.862,0.3944,0.6286,"phosphate"
+"CHEBI:17509",-0.3158,-0.4208,-0.5468,0.5879,0.758,"5-methylthioadenosine (MTA)"

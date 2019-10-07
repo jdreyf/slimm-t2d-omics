@@ -14,6 +14,7 @@ options(digits=3, stringsAsFactors=FALSE)
 library(ezlimma)
 library(Hitman)
 library(Mesa)
+library(Matrix)
 
 library(dplyr)
 library(reshape2)
@@ -23,15 +24,12 @@ source("R/melt_sim_tab.R")
 
 We validate the ability of `hitman` and `mesa` to control their false positive rate (*size*) and have high rate of detecting true positives (*power*) via simulations, where we know the truth.
 
-
-# Mediation
-
-
 We simulate our mediation methodsand compare them against the benchmark simulation of several mediation methods from Barfield et al. (2017), Table 1, for N=50. The best performers here are the joint significance test, the mediate function, and Hitman, so we rerun this with a small dataset common in genomics with N=6. 
 
 ```{r}
 nsim <- 10**4
 nsamp <- 50
+t1 <- 0.59
 ```
 
 ## Validating our simulations with joint significance test
@@ -43,9 +41,8 @@ We implemented the joint significance test in R, available as the internal `ezli
 ```{r, eval=FALSE}
 # also test js for small samples
 Joint <- Hitman:::joint_signif_mediation
-prop.sig.js <- Hitman:::sim_barfield(med.fnm = "Joint", b1t2.v=c(0, 0.14, 0.39), 
-                                      nsim = nsim, nsamp=nsamp)
-write.csv(prop.sig.js, paste0("./validation/val_hitman/sim_jointsig_nsamp", nsamp, "_nsim", nsim, ".csv"), na="")
+prop.sig.js <- Hitman:::sim_barfield(med.fnm = "Joint", b1t2.v=c(0, 0.14, 0.39), nsim = nsim, nsamp=nsamp, t1=t1)
+write.csv(prop.sig.js, paste0("./validation/sim_jointsig_nsamp", nsamp, "_nsim", nsim, "_t1", t1, ".csv"), na="")
 ```
 
 ## Hitman
@@ -54,9 +51,9 @@ This calculation takes ~30 min on my desktop PC. Our simulation results are at [
 
 ```{r, eval=FALSE}
 # t2=0.39; b1=0 < 0.05 with ngenes=2 & their SD in sim_barfield = 2
-(prop.sig.hit <- Hitman:::sim_barfield(med.fnm = "hitman", b1t2.v=c(0, 0.14, 0.39), nsim = nsim, ngene=99, 
-                                      nsamp = nsamp, verbose=TRUE))
-write.csv(prop.sig.hit, paste0("./validation/val_hitman/sim_hitman_nsamp", nsamp, "_nsim", nsim, ".csv"), na="")
+# nsamp=50, so limited effect of limma
+(prop.sig.hit <- Hitman:::sim_barfield(med.fnm = "hitman", b1t2.v=c(0, 0.14, 0.39), nsim = nsim, ngene=9, nsamp = nsamp, t1=t1))
+write.csv(prop.sig.hit, paste0("./validation/sim_hitman_nsamp", nsamp, "_nsim", nsim, "_t1", t1, ".csv"), na="")
 ```
 
 ## Counterfactual / potential outcomes
@@ -67,8 +64,8 @@ R scripts representing the below on the Linux cluster, called "O2", at Harvard M
 ```{r, eval=FALSE}
 nsim=1000
 ezmed <- Hitman:::ezmediate
-prop.sig.med <- Hitman:::sim_barfield(med.fnm = "ezmed", b1t2.v=c(0, 0.14, 0.39), nsim = nsim, sims=nsim)
-write.csv(prop.sig.med, paste0("./validation/val_hitman/sim_mediate_nsamp50_nsim", nsim, "_nperm", nsim, ".csv"), na="")
+prop.sig.med <- Hitman:::sim_barfield(med.fnm = "ezmed", b1t2.v=c(0, 0.14, 0.39), nsim = nsim, sims=nsim, t1=t1)
+write.csv(prop.sig.med, paste0("./validation/sim_mediate_nsamp50_nsim", nsim, "_nperm", nsim, "_t1", t1, ".csv"), na="")
 ```
 
 ## Compile tables
@@ -77,65 +74,42 @@ Compile Barfield table and output from our simulations into one matrix for N=50.
 
 ```{r, eval=FALSE}
 nsamp <- 50
-# barfield <- read.csv("validation/val_hitman/barfield2017_Table1_N50.csv")
+# barfield <- read.csv("validation/barfield2017_Table1_N50.csv")
 # rownames(barfield) <- paste0(barfield[, 1], barfield[, 2])
-hit <- melt_sim_tab(read.csv("validation/val_hitman/sim_hitman_nsamp50_nsim10000.csv"), nm="Hitman")
+hit <- melt_sim_tab(read.csv("validation/sim_hitman_nsamp50_nsim10000_t10.59.csv"), nm="Hitman")
 rownames(hit) <- paste0(hit[, 1], hit[, 2])
-js <- melt_sim_tab(read.csv("validation/val_hitman/sim_jointsig_nsamp50_nsim10000.csv"), nm="joint")
+js <- melt_sim_tab(read.csv("validation/sim_jointsig_nsamp50_nsim10000_t10.59.csv"), nm="joint")
 rownames(js) <- paste0(js[, 1], js[, 2])
-med <- melt_sim_tab(read.csv("validation/val_hitman/sim_mediate_nsamp50_nsim1000_nperm1000.csv"), nm="mediate")
+med <- melt_sim_tab(read.csv("validation/sim_mediate_nsamp50_nsim1000_nperm1000_t10.59.csv"), nm="mediate")
 rownames(med) <- paste0(med[, 1], med[, 2])
 
 stopifnot(rownames(hit)==rownames(med), rownames(hit)==rownames(js))
 comb.mat <- data.matrix(data.frame(hit, js[, -(1:2), drop=FALSE], 
                                    med[, -(1:2), drop=FALSE]))
 comb.mat <- comb.mat[order(-rowSums(comb.mat[, 1:2]==0), rowSums(comb.mat[, 1:2])), ]
-write_xlsx(x=as.data.frame(comb.mat), "validation/val_hitman/combined_n50_sim_tab.xlsx")
+# write_xlsx(x=as.data.frame(comb.mat), "validation/combined_n50_sim_tab.xlsx")
+write.csv(x = comb.mat, file = "validation/combined_n50_sim_tab.csv", row.names = FALSE)
 ```
 
+Test significance of difference in power.
 
-# MSA
+```{r t.test, include=TRUE}
+hit.0.39.prop <- nsim*signif(as.numeric(data.frame(comb.mat) %>% filter(b1==0.39, t2==0.39) %>% select("Hitman")), 5)
+hit.0.14.prop <- nsim*signif(as.numeric(data.frame(comb.mat) %>% filter(b1==0.14, t2==0.14) %>% select("Hitman")), 5)
 
+other.0.39.prop <- nsim*signif(as.numeric(data.frame(comb.mat) %>% filter(b1==0.39, t2==0.39) %>% select("mediate")), 5)
+other.0.14.prop <- nsim*signif(as.numeric(data.frame(comb.mat) %>% filter(b1==0.14, t2==0.14) %>% select("joint")), 5)
 
-Following Djordjilovic et al. (2018), we simulate data using the covariance matrix from the simPATHy package's chimera dataset.
+tt.39 <- t.test(x=rep(1:0, c(hit.0.39.prop, nsim-hit.0.39.prop)),
+                y=rep(1:0, nsim*c(other.0.39.prop, nsim-other.0.39.prop)),
+                var.equal = TRUE)
+print(tt.39)
 
-We simulate data to test multiple methods for Mediator Set Analysis (MSA), including our own (Mesa), & the global mediation test. For this we use our function `sim_msa`.
-
-```{r}
-# Declare variables.
-nsamp <- 50
-nperm <- 10**3
-nsim <- 500
-effect.v <- 0:3
-
-data("gmat_hallmark_subset")
-data("chimera_cov_mat")
+tt.14 <- t.test(x=rep(1:0, c(hit.0.14.prop, nsim-hit.0.14.prop)),
+                y=rep(1:0, nsim*c(other.0.14.prop, nsim-other.0.14.prop)),
+                var.equal = TRUE)
+print(tt.14)
 ```
-
-## Test mesa
-
-```{r, eval=FALSE}
-# b/c i add 1 to avoid p=0, more nperm --> lower p
-# 10min for 5 sim
-sbm.mesa <- sim_barfield_msa(msa.fnm="mesa", cov.mat=chimera_cov_mat, gmat=gmat_hallmark_subset, b1t2.v=c(0, 0.14, 0.39),
-                        alpha=0.05, nsamp=nsamp, nsim=nsim, nperm=nperm, verbose=FALSE)
-write.csv(sbm.mesa, paste0("./validation/sim_msa_nperm", nperm, "_nsim", nsim, ".csv"), na="")
-```
-
-## Test global mediation test from Djordjilovic et al. (2018)
-
-```{r, eval=FALSE}
-sbm.gmt <- Mesa:::sim_barfield_msa(msa.fnm="global_mediation_test", cov.mat=chimera_cov_mat, gmat=gmat_hallmark_subset, 
-                                  b1t2.v=c(0, 0.14, 0.39), alpha=0.05, nsamp=nsamp, nsim=nsim, verbose=FALSE)
-write.csv(sbm.gmt, paste0("./validation/val_mesa/sim_gmt_nperm", nperm, "_nsim", nsim, "_nsamp", nsamp, ".csv"), na="")
-```
-
-## Test Huang & Pan. 
-
-Downloaded their code in supp materials and used "MedTest.con.R: R code for the proposed mediation test for continuous outcome".
-
 
 # References
 Barfield R, Shen J, Just AC, Vokonas PS, Schwartz J, Baccarelli AA, VanderWeele TJ, Lin X. Testing for the indirect effect under the null for genome-wide mediation analyses. Genet Epidemiol. 2017 Dec;41(8):824-833.
-
-Djordjilović V, Page CM, Gran JM, Nøst TH, Sandanger TM, Veierød MB, Thoresen M. Global test for high-dimensional mediation: Testing groups of potential mediators. Stat Med. 2019 Aug 15;38(18):3346-3360.

@@ -1,0 +1,4 @@
+"","DWM.avg","RYGB.avg","RYGBvsDWM.t","RYGBvsDWM.p","RYGBvsDWM.FDR","CHEBI"
+"HSD17B10",0.2766,-0.1566,-1.309,0.1987,0.5428,NA
+"CHEBI:16027",0.4007,-0.2448,-1.214,0.2328,0.5428,"adenosine 5'-monophosphate (AMP)"
+"CHEBI:30776",-0.06904,-0.195,-0.7143,0.4797,0.6803,"caproate (6:0)"

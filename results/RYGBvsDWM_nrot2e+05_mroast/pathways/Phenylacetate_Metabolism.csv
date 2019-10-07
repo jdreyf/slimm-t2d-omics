@@ -1,0 +1,5 @@
+"","DWM.avg","RYGB.avg","RYGBvsDWM.t","RYGBvsDWM.p","RYGBvsDWM.FDR","CHEBI"
+"CHEBI:17884",0.01186,0.8081,2.89,0.006504,0.1905,"phenylacetylglutamine"
+"CHEBI:30745",0.3972,1.53,2.11,0.04192,0.3884,"phenylacetate"
+"CHEBI:16027",0.4007,-0.2448,-1.214,0.2328,0.5428,"adenosine 5'-monophosphate (AMP)"
+"CHEBI:18050",0.09937,0.01096,-1.161,0.2531,0.5536,"glutamine"
