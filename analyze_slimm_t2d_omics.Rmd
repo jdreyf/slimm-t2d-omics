@@ -128,7 +128,7 @@ soma.venn <- ezvenn(soma.tab, prefix.v = c(names(contr.v1)[-1], names(contr.bmi)
 soma.sig <- rownames(soma.venn)[rowSums(abs(soma.venn)) > 0]
 soma.sig.nobmi <- rownames(soma.venn)[rowSums(abs(soma.venn[, paste0(names(contr.v1)[-1], ".sig") ])) > 0]
 soma.venn.df <- data.frame(soma.venn[soma.sig,], soma.annot[soma.sig, 1:7])
-write.csv(soma.venn.df, paste0("soma_FDR", 100*FDR, " _venn.csv"))
+write.csv(soma.venn.df, paste0("soma_FDR", 100*FDR, "_venn.csv"))
 setwd("..")
 ```
 
@@ -136,15 +136,15 @@ A table representing a Venn diagram of proteomics using FDR = `r FDR` is at [som
 
 A heatmap of differential proteins is at [soma_heat.pdf](./results/soma_heat.pdf).
 
-```{r somaheat}
+```{r soma.heat}
 setwd("./figures")
 heat.mat <- data.matrix(soma.stats[soma.sig.nobmi, grep("logFC$", colnames(soma.stats))])
 labRow <- sub(";.+", "", soma.annot[rownames(heat.mat), "EntrezGeneSymbol"])
 labCol <- gsub("RYGBvsDWMat|mo\\.logFC", "", colnames(heat.mat))
 ezheat(heat.mat, labrows = labRow,  name="soma_FDR15_heat", sc="none", labcols = labCol, 
        reorder_rows = TRUE, reorder_cols = FALSE, fontsize_row = 8, fontsize_col = 16, angle_col = "0")
-rownames(heat.mat) <- labRow
-write.csv(signif(heat.mat, 3), "../results/soma_heat.csv")
+heat.df <- data.frame(signif(heat.mat, 3), soma.annot[rownames(heat.mat),])
+write.csv(heat.df, "../results/soma_heat.csv")
 setwd("..")
 ```
 
@@ -182,8 +182,8 @@ Analyze differences between groups at each time point, and these differences aft
 
 ```{r met_venns}
 setwd("./results")
-met.venn <- ezvenn(met.tab, prefix.v = c(names(contr.v1)[-c(1, 4)], names(contr.bmi)[-3]), fdr.cutoff = 0.15, 
-                   name="met_FDR15", plot = FALSE)
+met.venn <- ezvenn(met.tab, prefix.v = c(names(contr.v1)[-c(1, 4)], names(contr.bmi)[-3]), fdr.cutoff = FDR, 
+                   name=paste0("met_FDR", 100*FDR), plot = FALSE)
 met.venn <- met.venn[rowSums(abs(met.venn)) > 0,]
 met.sig <- rownames(met.venn)
 met.sig.nobmi <- rownames(met.venn)[rowSums(abs(met.venn[, paste0(names(contr.v1)[-c(1, 4)], ".sig") ])) > 0]
@@ -192,19 +192,19 @@ write.csv(met.venn.df, "met_FDR15_venn.csv")
 setwd("..")
 ```
 
-A table representing a Venn diagram of metabolomics using FDR = 0.15 is at  [met_FDR15_venn.csv](./results/met_FDR15_venn.csv).
+A table representing a Venn diagram of metabolomics using FDR = `r FDR` is at [met_FDR15_venn.csv](./results/met_FDR15_venn.csv).
 
-```{r metheat}
+```{r met_heat}
 setwd("./figures")
-mets.heat <- ezvenn(met.tab, prefix.v = names(contr.v1)[-c(1, 4)], fdr.cutoff = 0.05, name="met_FDR05", plot = FALSE)
+mets.heat <- ezvenn(met.tab, prefix.v = names(contr.v1)[-c(1, 4)], fdr.cutoff = FDR, name=paste0("met_FDR", FDR), plot = FALSE)
 mets.heat <- rownames(mets.heat)[rowSums(abs(mets.heat)) > 0]
 heat.mat <- data.matrix(met.stats[mets.heat, grep("logFC$", colnames(met.stats))])
 labRow <- sub(";.+", "", met.annot[rownames(heat.mat), "BIOCHEMICAL"])
 labCol <- gsub("RYGBvsDWMat|mo\\.logFC", "", colnames(heat.mat))
-ezheat(heat.mat, labrows = labRow,  name="met_FDR05_heat", sc="none", labcols = labCol, 
+ezheat(heat.mat, labrows = labRow,  name=paste0("met_FDR", 100*FDR,"_heat"), sc="none", labcols = labCol, 
        reorder_rows = TRUE, reorder_cols = FALSE, fontsize_row = 8, fontsize_col = 16, angle_col = "0")
-rownames(heat.mat) <- labRow
-write.csv(signif(heat.mat, 3), "../results/met_heat.csv")
+heat.df <- data.frame(signif(heat.mat, 3), met.annot[rownames(heat.mat),])
+write.csv(heat.df, "../results/met_heat.csv")
 setwd("..")
 ```
 
@@ -360,9 +360,9 @@ We correlate top somalogic proteins with top metabolites.
 nms.tmp <- intersect(grep("_3$", colnames(diff.soma.mat), value=TRUE),
                      grep("_3$", colnames(diff.met.mat), value=TRUE))
 
-mv <- read.csv("results/met_FDR05_venn.csv", row.names = 1)
+mv <- read.csv("results/met_heat.csv", row.names = 1)
 top.met <- rownames(mv)[order(met.annot[rownames(mv), "BIOCHEMICAL"])]
-sv <- read.csv("results/soma_FDR05_venn.csv", row.names = 1)
+sv <- read.csv("results/soma_heat.csv", row.names = 1)
 top.soma <- rownames(sv)[order(soma.annot[rownames(sv), "EntrezGeneSymbol"])]
 
 diff.soma.mat3.ss <- data.matrix(diff.soma.mat[top.soma, nms.tmp])
@@ -388,7 +388,7 @@ cor.array[,, "FDR"] <- p.adjust(cor.array[,, "p"], method = "BH")
 cor.r <- signif(cor.array[,,"r"], 3)
 cor.r.out <- cbind(cor.r, NA, "NOTE: p=0.05 corresponds to |r|=0.33 & FDR=0.24"=NA)
 colnames(cor.r.out)[(ncol(cor.r.out)-1)] <- NA
-write.csv(t(cor.r.out), "results/soma_met_corr_coeffs.csv")
+write.csv(t(cor.r.out), "results/soma_met_corr_coeffs.csv", na = "")
 ```
 
 
@@ -518,25 +518,6 @@ nms.tmp <- intersect(colnames(diff.mat3), rownames(diff.pheno12))
 igc <- interGeneCorrelation(diff.mat3[,nms.tmp], design=model.matrix(~diff.pheno12[nms.tmp, "arm"]))$correlation
 ```
 
-## HOMA-IR
-
-```{r deltas.homair}
-setwd("results")
-nms.tmp <- intersect(colnames(diff.mat3), rownames(diff.pheno12)[!is.na(diff.pheno12$homair)])
-hm <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="RYGB"), 
-             M=diff.mat3[,nms.tmp], 
-             Y=diff.pheno12[nms.tmp, "homair"])
-hm.df <- data.frame(signif(hm, 3), CHEBI=chebi.map[rownames(hm)])
-write.csv(hm.df, "homair12_vs_analytes3_hitman_stats.csv")
-
-hm.df[is.na(hm.df[, "EMY.chisq"]), "EMY.chisq"] <- 0
-cam.homair <- ezcamerapr(stats.tab=hm.df[, "EMY.chisq", drop=FALSE], G=smpdb_gmt, feat.tab=hm.df, alternative = "greater",
-                         inter.gene.cor = igc, name="homair")
-setwd("..")
-```
-
-We write the hitman results for each analyte's 3mo change from baseline as a mediator of 12mo HOMA-IR change at [homair12_vs_analytes3_hitman_stats.csv](./results/homair12_vs_analytes3_hitman_stats.csv).
-
 ## HbA1c
 
 ```{r deltas.HbA1c, eval=FALSE}
@@ -557,6 +538,22 @@ setwd("..")
 ```
 
 We find no significant pathways.
+
+## HOMA-IR
+
+```{r deltas.homair}
+setwd("results")
+nms.tmp <- intersect(colnames(diff.mat3), rownames(diff.pheno12)[!is.na(diff.pheno12$homair)])
+hm <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="RYGB"), 
+             M=diff.mat3[,nms.tmp], 
+             Y=diff.pheno12[nms.tmp, "homair"])
+hm.df <- data.frame(signif(hm, 3), CHEBI=chebi.map[rownames(hm)])
+
+hm.df[is.na(hm.df[, "EMY.chisq"]), "EMY.chisq"] <- 0
+cam.homair <- ezcamerapr(stats.tab=hm.df[, "EMY.chisq", drop=FALSE], G=smpdb_gmt, feat.tab=hm.df, alternative = "greater",
+                         inter.gene.cor = igc, name="homair")
+setwd("..")
+```
 
 ## dins030
 
@@ -636,7 +633,8 @@ stopifnot("CHEBI:37373" %in% rownames(diff.mat3))
 stopifnot(order(-abs(as.numeric(cor.array[,,"r"]))) == order(as.numeric(cor.array[,, "p"])))
 stopifnot(cor.r["OMD", "pro-hydroxy-pro"] == 0.521)
 # signif(cor.array[,,"p"][wm], 3)
-stopifnot(ncol(cor.r) == 62)
+
+stopifnot(nrow(cor.r) == 56)
 wm <- which.min(abs(cor.array[,,"p"]-0.05))
 stopifnot(signif(abs(cor.array[,,"r"][wm]), 2) == 0.33)
 stopifnot(signif(cor.array[,,"FDR"][wm], 2) == 0.24)
