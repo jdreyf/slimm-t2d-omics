@@ -41,8 +41,6 @@ hm.met.dins030 <- read.csv("dins030_12_vs_met3_hitman.csv")
 hm.soma.homair <- read.csv("homair12_vs_soma3_hitman.csv")
 hm.met.homair <- read.csv("homair12_vs_met3_hitman.csv")
 
-mesa.homair <- ezlimma::read_linked_xl("homair_stats_nperm10000_mesa/homair_stats_nperm10000_mesa.xlsx")
-mesa.homair <- data.frame(X=rownames(mesa.homair), mesa.homair)
 setwd("..")
 ```
 
@@ -53,7 +51,7 @@ xx <- list(README=readme,
            Soma_met_r=soma.met.cor, Roast_between_arm=roast.by.grp,
            Hitman_soma_HbA1c=hm.soma.HbA1c, Hitman_met_HbA1c=hm.met.HbA1c, Hitman_clin_HbA1c=hm.clin3.HbA1c, 
            Hitman_soma_dins030=hm.soma.dins030, Hitman_met_dins030=hm.met.dins030, 
-           Hitman_soma_homair=hm.soma.homair, Hitman_met_homair=hm.met.homair, Mesa_homair=mesa.homair)
+           Hitman_soma_homair=hm.soma.homair, Hitman_met_homair=hm.met.homair)
 
 #get rid of X in top-left corner
 xx[-1] <- lapply(xx[-1], FUN = function(xx.tmp){

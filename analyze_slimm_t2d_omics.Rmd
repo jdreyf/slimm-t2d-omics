@@ -385,7 +385,9 @@ hm.met.df <- data.frame(signif(hm.met, 3), met.annot[rownames(hm.met),])
 write.csv(hm.met.df, paste0("./results/dins030_12_vs_met3_hitman.csv"))
 ```
 
+
 # Correlate soma vs. met
+
 
 We correlate top somalogic proteins with top metabolites.
 
@@ -424,7 +426,9 @@ colnames(cor.r.out)[(ncol(cor.r.out)-1)] <- NA
 write.csv(t(cor.r.out), "results/soma_met_corr_coeffs.csv")
 ```
 
+
 # Pathways
+
 
 For pathway input data, differences from baseline are combined for people who have both somascan & metabolomics. Analytes are subset and summarized (by averaging over analytes with the same ID) to match network, for network plotting.
 
@@ -532,49 +536,43 @@ plot_pwy(feat.tab = fs.z, G.pwy = smpdb_gmt[["Phospholipid Biosynthesis"]], stat
 setwd("..")
 ```
 
-# Mesa
+# Pathway mediation
 
-We apply Hitman to combined (metabolite + protein) dataset, then test Mesa.
+We apply Hitman to combined (metabolite + protein) dataset, then test pathways.
 
 ```{r}
 # diff_mat file created in gb_ww_net_integration
 diff.mat3 <- read.csv("../slimm-t2d-omics-data/soma_and_met_diff_mat.csv", row.names=1)
 ```
 
-## Mesa homair
+We need to know inter-gene correlation for method `cameraPR`.
+
+```{r}
+nms.tmp <- intersect(colnames(diff.mat3), rownames(diff.pheno12))
+# even though individual analytes use subset of samples who don't have NA in pheno, this is best measure
+igc <- interGeneCorrelation(diff.mat3[,nms.tmp], design=model.matrix(~diff.pheno12[nms.tmp, "arm"]))$correlation
+```
+
+## HOMA-IR
 
 ```{r deltas.homair}
+setwd("results")
 nms.tmp <- intersect(colnames(diff.mat3), rownames(diff.pheno12)[!is.na(diff.pheno12$homair)])
 hm <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="RYGB"), 
              M=diff.mat3[,nms.tmp], 
              Y=diff.pheno12[nms.tmp, "homair"])
 hm.df <- data.frame(signif(hm, 3), CHEBI=chebi.map[rownames(hm)])
-write.csv(hm.df, "results/homair12_vs_analytes3_hitman_stats.csv")
-```
+write.csv(hm.df, "homair12_vs_analytes3_hitman_stats.csv")
 
-We write the hitman results for each analyte's 3mo change from baseline as a mediator of 12mo HOMA-IR change.
-
-```{r ph.homair, eval=FALSE}
-setwd("./results")
-hm.df <- read.csv("homair12_vs_analytes3_hitman_stats.csv", row.names = 1)
-diff.nms <- intersect(rownames(diff.pheno12)[!is.na(diff.pheno12$homair)], colnames(diff.mat3))
-exposure.v <- as.numeric(diff.pheno12[diff.nms, "arm"] == "RYGB")
-
-nperm <- 10**3
-nm <- paste0("homair_stats_nperm", nperm)
-res %<-% mesa(M=diff.mat3[,diff.nms], E=exposure.v, Y=diff.pheno12[diff.nms, "homair"],
-                     gmat=smpdb_gmat, nperm=nperm, min.nfeats=3, ret.null.mats = TRUE,
-                     annot.df = hm.df[, c("EMY.p", "EMY.FDR", "CHEBI")], ncores=1, name = nm)
-
-write.csv(ps, paste0(nm, ".csv"))
-
-# feature stats from Pants non-parametric permutations
-feat.df <- data.frame(ezlimma::df_signif(fs, 3), annot=chebi.map[rownames(fs)])
-write.csv(feat.df, paste0("homair_feature_stats_nperm", nperm, "_mesa.csv"))
+hm.df[is.na(hm.df[, "EMY.z"]), "EMY.z"] <- -10**2
+cam.homair <- ezcamerapr(stats.tab=hm.df[, "EMY.z", drop=FALSE], G=smpdb_gmt, feat.tab=hm.df, alternative = "greater",
+                         inter.gene.cor = igc, name="homair")
 setwd("..")
 ```
 
-## Mesa HbA1c
+We write the hitman results for each analyte's 3mo change from baseline as a mediator of 12mo HOMA-IR change at [homair12_vs_analytes3_hitman_stats.csv](./results/homair12_vs_analytes3_hitman_stats.csv).
+
+## HbA1c
 
 ```{r deltas.HbA1c, eval=FALSE}
 setwd("./results")
@@ -587,23 +585,15 @@ hm.df <- data.frame(signif(hm, 3), CHEBI=chebi.map[rownames(hm)])
 diff.nms <- intersect(rownames(diff.pheno12)[!is.na(diff.pheno12$HbA1c)], colnames(diff.mat3))
 exposure.v <- as.numeric(diff.pheno12[diff.nms, "arm"] == "RYGB")
 
-nperm <- 10**4
-nm <- paste0("HbA1c_stats_nperm", nperm)
-begin <- Sys.time()
-c(ps, fs) %<-% mesa(M=diff.mat3[,diff.nms], E=exposure.v, Y=diff.pheno12[diff.nms, "HbA1c"],
-                     Gmat=smpdb_gmat, nperm=nperm, min.nfeats=3, 
-                     annot.df = hm.df[, c("EMY.p", "EMY.FDR", "CHEBI")], ncores=1, name = nm)
-end <- Sys.time()
-(end - begin)/nperm # 0.00064 mins
-
-head(ps) # min fdr = 0.36
-
+hm.df[is.na(hm.df[, "EMY.z"]), "EMY.z"] <- -10**2
+cam.a1c  <- ezcamerapr(stats.tab=hm.df[, "EMY.z", drop=FALSE], G=smpdb_gmt, feat.tab=hm.df, alternative = "greater",
+                       inter.gene.cor = igc)
 setwd("..")
 ```
 
 We find no significant pathways.
 
-## Mesa dins030
+## dins030
 
 ```{r deltas.dins030, eval=FALSE}
 setwd("./results")
@@ -616,16 +606,13 @@ hm.df <- data.frame(signif(hm, 3), CHEBI=chebi.map[rownames(hm)])
 diff.nms <- intersect(rownames(diff.pheno12)[!is.na(diff.pheno12$dins030)], colnames(diff.mat3))
 exposure.v <- as.numeric(diff.pheno12[diff.nms, "arm"] == "RYGB")
 
-nperm <- 10**4
-nm <- paste0("dins030_stats_nperm", nperm)
-c(ps, fs) %<-% mesa(M=diff.mat3[,diff.nms], E=exposure.v, Y=diff.pheno12[diff.nms, "dins030"],
-                     Gmat=smpdb_gmat, nperm=nperm, min.nfeats=3, 
-                     annot.df = hm.df[, c("EMY.p", "EMY.FDR", "CHEBI")], ncores=1, name = nm)
-head(ps) # min  FDR 0.21
+hm.df[is.na(hm.df[, "EMY.z"]), "EMY.z"] <- -10**2
+cam.dins  <- ezcamerapr(gstats=hm.df[, "EMY.z", drop=FALSE], G=smpdb_gmt, feat.tab=hm.df, alternative = "greater",
+                        inter.gene.cor = igc, name="dins30")
 setwd("..")
 ```
 
-We find no signifiance pathways.
+We find caffeine metabolism significant.
 
 # Session info
 
