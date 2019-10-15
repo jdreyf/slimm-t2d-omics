@@ -1,4 +1,4 @@
-"","EMY.chisq","EMY.p","EMY.FDR","EM.z","EM.p","MY.z","MY.p","CHEBI"
-"CHEBI:16027",0,1,1,-1.09,0.276,-1.83,0.0675,"adenosine 5'-monophosphate (AMP)"
-"CHEBI:17627",0,1,1,-1.29,0.198,-1.79,0.0739,"heme"
-"CAT",0,1,1,-1.16,0.247,-1.54,0.124,NA
+"","EMY.chisq","EMY.p","EMY.FDR","EM.z","EM.p","MY.z","MY.p","annot"
+"CAT",0,1,1,1.04,0.299,-1.33,0.184,"Catalase"
+"CHEBI:16027",0,1,1,1.08,0.278,-1.82,0.0691,"adenosine 5'-monophosphate (AMP)"
+"CHEBI:17627",0,1,1,1.28,0.2,-1.78,0.0751,"heme"

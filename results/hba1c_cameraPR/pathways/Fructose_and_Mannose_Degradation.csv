@@ -1,0 +1,5 @@
+"","EMY.chisq","EMY.p","EMY.FDR","EM.z","EM.p","MY.z","MY.p","annot"
+"CHEBI:28645",1.46,0.227,1,-0.748,0.454,1.91,0.0564,"fructose"
+"TPI1",0,1,1,-0.993,0.321,-1.14,0.254,"Triosephosphate isomerase"
+"CHEBI:18367",0,1,1,-0.665,0.506,-0.122,0.903,"phosphate"
+"CHEBI:17924",0,1,1,-0.463,0.643,-0.02,0.984,"mannitol/sorbitol"

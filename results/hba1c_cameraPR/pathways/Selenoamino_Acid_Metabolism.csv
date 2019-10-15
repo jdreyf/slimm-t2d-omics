@@ -1,0 +1,6 @@
+"","EMY.chisq","EMY.p","EMY.FDR","EM.z","EM.p","MY.z","MY.p","annot"
+"CHEBI:16977",2.64,0.104,1,-2.05,0.0403,1.26,0.209,"alanine"
+"CHEBI:30831",2.11,0.146,1,-1.05,0.293,1.25,0.213,"alpha-ketobutyrate"
+"CHEBI:17115",1.56,0.212,1,1.41,0.159,-0.801,0.423,"serine"
+"CHEBI:16335",0,1,1,-0.398,0.691,-1.34,0.18,"adenosine"
+"CHEBI:16027",0,1,1,-0.965,0.334,-0.845,0.398,"adenosine 5'-monophosphate (AMP)"

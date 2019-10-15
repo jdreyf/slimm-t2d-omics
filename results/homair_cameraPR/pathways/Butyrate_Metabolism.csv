@@ -1,4 +1,4 @@
-"","EMY.chisq","EMY.p","EMY.FDR","EM.z","EM.p","MY.z","MY.p","CHEBI"
-"CHEBI:15741",2.25,0.133,1,-1.85,0.0638,1.11,0.267,"succinate"
-"CHEBI:15344",2.86,0.0907,1,1.35,0.177,-1.34,0.181,"acetoacetate"
-"CHEBI:16027",0,1,1,-1.09,0.276,-1.83,0.0675,"adenosine 5'-monophosphate (AMP)"
+"","EMY.chisq","EMY.p","EMY.FDR","EM.z","EM.p","MY.z","MY.p","annot"
+"CHEBI:15344",2.84,0.0918,0.882,-1.34,0.179,-1.33,0.184,"acetoacetate"
+"CHEBI:15741",2.07,0.15,0.905,1.74,0.0817,1.04,0.3,"succinate"
+"CHEBI:16027",0,1,1,1.08,0.278,-1.82,0.0691,"adenosine 5'-monophosphate (AMP)"

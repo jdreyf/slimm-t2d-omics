@@ -1,4 +1,4 @@
-"","EMY.z","EMY.p","EMY.FDR","EM_dir.p","MY_dir.p","EM.z","EM.p","MY.z","MY.p","CHEBI"
-"CHEBI:17627",-1.24,0.892,0.928,0.198,0.892,-1.29,0.198,1.24,0.216,"heme"
-"CHEBI:16962",-0.772,0.78,0.904,0.247,0.78,-1.16,0.247,0.772,0.44,"cortisone"
-"CHEBI:28043",-0.612,0.73,0.901,0.36,0.73,0.916,0.36,-0.612,0.541,"21-hydroxypregnenolone disulfate"
+"","EMY.chisq","EMY.p","EMY.FDR","EM.z","EM.p","MY.z","MY.p","annot"
+"CHEBI:17627",0,1,1,1.28,0.2,1.23,0.218,"heme"
+"CHEBI:16962",0,1,1,1.14,0.255,0.758,0.448,"cortisone"
+"CHEBI:28043",0,1,1,-0.912,0.362,-0.609,0.543,"21-hydroxypregnenolone disulfate"
