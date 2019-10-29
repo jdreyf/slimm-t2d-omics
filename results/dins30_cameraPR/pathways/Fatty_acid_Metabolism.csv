@@ -1,4 +1,4 @@
 "","EMY.chisq","EMY.p","EMY.FDR","EM.z","EM.p","MY.z","MY.p","annot"
-"CHEBI:17490",2.69,0.101,0.996,-2.33,0.02,1.28,0.202,"palmitoylcarnitine"
-"CHEBI:16027",1.32,0.251,0.996,1.08,0.278,-0.671,0.502,"adenosine 5'-monophosphate (AMP)"
-"CHEBI:15756",0,1,1,0.897,0.37,0.68,0.496,"palmitate (16:0)"
+"CHEBI:17490",2.69,0.101,0.925,-2.33,0.02,1.28,0.202,"palmitoylcarnitine"
+"CHEBI:16027",1.32,0.251,0.925,1.08,0.278,-0.671,0.502,"adenosine 5'-monophosphate (AMP)"
+"CHEBI:15756",0.0999,0.752,0.926,0.897,0.37,0.68,0.496,"palmitate (16:0)"

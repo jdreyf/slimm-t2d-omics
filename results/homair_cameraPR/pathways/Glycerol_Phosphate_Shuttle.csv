@@ -1,4 +1,4 @@
 "","EMY.chisq","EMY.p","EMY.FDR","EM.z","EM.p","MY.z","MY.p","annot"
-"CHEBI:15978",1.02,0.312,0.905,1.06,0.291,0.491,0.623,"glycerol 3-phosphate"
-"CHEBI:17594",0.543,0.461,0.905,-0.496,0.62,-0.0976,0.922,"hydroquinone sulfate"
-"GAPDH",0,1,1,1.21,0.227,-1.31,0.189,"GAPDH, liver"
+"CHEBI:15978",1.02,0.312,0.887,1.06,0.291,0.491,0.623,"glycerol 3-phosphate"
+"GAPDH",0.0204,0.886,0.934,1.21,0.227,-1.31,0.189,"GAPDH, liver"
+"CHEBI:17594",0.543,0.461,0.887,-0.496,0.62,-0.0976,0.922,"hydroquinone sulfate"

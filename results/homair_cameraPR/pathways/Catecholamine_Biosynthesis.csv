@@ -1,4 +1,4 @@
 "","EMY.chisq","EMY.p","EMY.FDR","EM.z","EM.p","MY.z","MY.p","annot"
 "CHEBI:17895",6.05,0.0139,0.734,2.2,0.0279,3.27,0.00108,"tyrosine"
-"DDC",0,1,1,1.9,0.0572,-1.14,0.254,"dopa decarboxylase"
-"CHEBI:16680",0,1,1,1.57,0.117,-1.38,0.169,"S-adenosylhomocysteine (SAH)"
+"DDC",0.0255,0.873,0.934,1.9,0.0572,-1.14,0.254,"dopa decarboxylase"
+"CHEBI:16680",0.0113,0.916,0.945,1.57,0.117,-1.38,0.169,"S-adenosylhomocysteine (SAH)"

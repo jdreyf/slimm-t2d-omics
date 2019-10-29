@@ -539,14 +539,15 @@ plot_pwy(feat.tab = fs.z, G.pwy = smpdb_gmt[["Phospholipid Biosynthesis"]], stat
          name = paste0("../figures/Phospholipid_Biosynthesis_ntop", ntop))
 
 # graphical abstract combined BCAA, CNDP1, histidine
-ntop <- 6
-g.tmp <- smpdb_gmt[["Valine, Leucine and Isoleucine Degradation"]]
-g.tmp$genes <- c(g.tmp$genes, "CNDP1", "CHEBI:15971")
-pp <- plot_pwy(feat.tab = fs.z, G.pwy = g.tmp, stat.colnm = "z", annot.colnm = "annot",
-         gr=gr, ntop = ntop, alternative="two.sided", repel = TRUE, seed=0, name = NA)
-pdf(paste0("../figures/combined_ntop", ntop, ".pdf"), height = 5)
-plot(pp)
-dev.off()
+# ntop <- 6
+# g.tmp <- smpdb_gmt[["Valine, Leucine and Isoleucine Degradation"]]
+# g.tmp$genes <- c(g.tmp$genes, "CNDP1", "CHEBI:15971")
+# pp <- plot_pwy(feat.tab = fs.z, G.pwy = g.tmp, stat.colnm = "z", annot.colnm = "annot",
+#          gr=gr, ntop = ntop, alternative="two.sided", repel = TRUE, seed=0, name = NA)
+# pdf(paste0("../figures/combined_ntop", ntop, ".pdf"), height = 5)
+# plot(pp)
+# dev.off()
+
 setwd("..")
 ```
 
