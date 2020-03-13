@@ -13,7 +13,6 @@ knitr::opts_chunk$set(echo = FALSE, include=FALSE)
 options(digits=3, stringsAsFactors=FALSE)
 library(ezlimma)
 library(Hitman)
-library(Mesa)
 library(Matrix)
 
 library(dplyr)
@@ -24,7 +23,7 @@ source("R/melt_sim_tab.R")
 
 We validate the ability of `hitman` and `mesa` to control their false positive rate (*size*) and have high rate of detecting true positives (*power*) via simulations, where we know the truth.
 
-We simulate our mediation methodsand compare them against the benchmark simulation of several mediation methods from Barfield et al. (2017), Table 1, for N=50. The best performers here are the joint significance test, the mediate function, and Hitman, so we rerun this with a small dataset common in genomics with N=6. 
+We simulate our mediation methods and compare them against the benchmark simulation of several mediation methods from Barfield et al. (2017), Table 1, for N=50. The best performers here are the joint significance test, the mediate function, and Hitman, so we rerun this with a small dataset common in genomics with N=6. 
 
 ```{r}
 nsim <- 10**4
