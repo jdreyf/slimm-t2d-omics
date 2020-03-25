@@ -23,7 +23,7 @@ remotes::install_github(repo="jdreyf/ezlimmaplot", build_opts = c("--no-resave-d
 remotes::install_github(repo="jdreyf/Hitman", build_opts = c("--no-resave-data", "--no-manual"), build_vignettes = TRUE)
 ```
 
-Load and attached the above and other R packages.
+Load and attach the above and other R packages.
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, include=FALSE)
