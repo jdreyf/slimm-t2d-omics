@@ -21,7 +21,7 @@ source("R/melt_sim_tab.R")
 
 We validate the ability of `hitman` to control its false positive rate (*size*) and have a high rate of detecting true positives (*power*) via simulations, where we know the truth.
 
-We simulate our mediation methods and compare them against the benchmark simulation of several mediation methods from Barfield et al. (2017), Table 1, for N=50. The best performers here are the joint significance test, the mediate function, and Hitman, so we rerun this with a small dataset common in genomics with N=6. 
+We simulate our mediation methods and compare them against the benchmark simulation of several mediation methods from Barfield et al. (2017), Table 1, for N=50.
 
 ```{r}
 nsim <- 10**4
@@ -29,7 +29,9 @@ nsamp <- 50
 t1 <- 0.59
 ```
 
+
 ## Validating our simulations with joint significance test
+
 
 To validate that our function provides results consistent with the simulations in Barfield et al. (2017), we compared Barfield et al.'s simulations with the joint significance test to our simulations with the joint significance test.
 
@@ -42,7 +44,9 @@ prop.sig.js <- Hitman:::sim_barfield(med.fnm = "Joint", b1t2.v=c(0, 0.14, 0.39),
 write.csv(prop.sig.js, paste0("./validation/sim_jointsig_nsamp", nsamp, "_nsim", nsim, "_t1", t1, ".csv"), na="")
 ```
 
+
 ## Hitman
+
 
 This calculation takes ~30 min on my desktop PC. Our simulation results are at [sim_hitman_nsamp50_nsim10000.csv](./validation/sim_hitman_nsamp50_nsim10000.csv).
 
