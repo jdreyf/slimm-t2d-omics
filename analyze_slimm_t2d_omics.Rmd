@@ -35,6 +35,7 @@ library(usethis)
 library(ggplot2)
 library(knitr)
 library(Matrix)
+library(writexl)
 library(zeallot)
 
 library(limma)
