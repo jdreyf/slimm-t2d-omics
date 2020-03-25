@@ -4,9 +4,7 @@ date: "`r Sys.Date()`"
 output: word_document
 ---
 
-```{r}
-setwd("B:/patti/gb_ww_trial/slimm-t2d-omics/")
-```
+It is assumed that `analyze_slimm_t2d_omics.Rmd` was already run, so `ezlimma` and `Hitman` have been installed. Then, installation time is under one minute. Some of this code took too long on a desktop, so was run on a server, as described below.
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, include=FALSE)
@@ -21,7 +19,7 @@ library(writexl)
 source("R/melt_sim_tab.R")
 ```
 
-We validate the ability of `hitman` and `mesa` to control their false positive rate (*size*) and have high rate of detecting true positives (*power*) via simulations, where we know the truth.
+We validate the ability of `hitman` to control its false positive rate (*size*) and have a high rate of detecting true positives (*power*) via simulations, where we know the truth.
 
 We simulate our mediation methods and compare them against the benchmark simulation of several mediation methods from Barfield et al. (2017), Table 1, for N=50. The best performers here are the joint significance test, the mediate function, and Hitman, so we rerun this with a small dataset common in genomics with N=6. 
 
@@ -33,9 +31,9 @@ t1 <- 0.59
 
 ## Validating our simulations with joint significance test
 
-We are simulating using the internal `ezlimma` function `ezlimma:::sim_barfield`. To validate that our this function provides results consistent with the simulations in Barfield et al. (2017), we compared Barfield et al.'s simulations with the joint significance test to our simulations with the joint significance test.   
+To validate that our function provides results consistent with the simulations in Barfield et al. (2017), we compared Barfield et al.'s simulations with the joint significance test to our simulations with the joint significance test.
 
-We implemented the joint significance test in R, available as the internal `ezlimma` function `ezlimma:::joint_signif_mediation`. We first tested that this function gave the same results as another implemention of this test in R, the funciton `mdt_simple` in package `JSmediation` (available upon reasonable request). Here, we validate that our implementation matches Barfield et al. (2017) Table 1. This calculation takes ~5 min on my desktop PC. 
+We implemented the joint significance test in R. We first tested that this function gave the same results as another implemention of this test in R, the function `mdt_simple` in package `JSmediation`. Here, we validate that our implementation matches Barfield et al. (2017) Table 1. This calculation takes ~5 min on my desktop PC. 
 
 ```{r, eval=FALSE}
 # also test js for small samples

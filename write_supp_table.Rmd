@@ -4,11 +4,14 @@ date: "`r Sys.Date()`"
 output: word_document
 ---
 
+It is assumed that `analyze_slimm_t2d_omics.Rmd` was already run, so `ezlimma` has been installed. Then, installation time is under one minute. The RMD can be knit into Word in under one minute.
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, include=FALSE)
 options(digits=3, stringsAsFactors=FALSE)
 library(ezlimma)
 library(readxl)
+library(tidyxl)
 library(writexl)
 ```
 

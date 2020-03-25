@@ -5,6 +5,8 @@ date: "`r Sys.Date()`"
 output: word_document
 ---
 
+The installation of required R packages takes approximately 15 minutes. The RMD file can be knit to Word in approximately 1 minute.
+
 ## Install & load R packages
 
 Install related R packages from GitHub, if needed. This is also described in the `ezlimmaplot` README at [https://github.com/jdreyf/ezlimmaplot](https://github.com/jdreyf/ezlimmaplot). Other packages can be installed with `install.packages()`.
@@ -24,8 +26,6 @@ remotes::install_github(repo="jdreyf/Hitman", build_opts = c("--no-resave-data",
 Load and attached the above and other R packages.
 
 ```{r setup, include=FALSE}
-setwd("B:/patti/gb_ww_trial/slimm-t2d-omics/")
-
 knitr::opts_chunk$set(echo = FALSE, include=FALSE)
 options(digits=3, stringsAsFactors=FALSE)
 source("R/make_diff_mat.R")
