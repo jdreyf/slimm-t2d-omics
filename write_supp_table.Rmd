@@ -54,12 +54,13 @@ xx <- list(README=readme,
            SOMAscan=soma, Soma_sig=soma.venn,
            Metabolites=met, Met_sig=met.venn,
            Soma_met_r=soma.met.cor, Roast_between_arm=roast.by.grp,
-           Hitman_soma_HbA1c=hm.soma.HbA1c, Hitman_met_HbA1c=hm.met.HbA1c, Hitman_clin_HbA1c=hm.clin3.HbA1c, 
+           Hitman_soma_HbA1c=hm.soma.HbA1c, Hitman_met_HbA1c=hm.met.HbA1c, 
+           Hitman_clin_HbA1c=hm.clin3.HbA1c, 
            Hitman_soma_dins030=hm.soma.dins030, Hitman_met_dins030=hm.met.dins030, 
            Hitman_soma_homair=hm.soma.homair, Hitman_met_homair=hm.met.homair,
            Hitman_CAMERA_homair=hm.cam.homair)
 
-#get rid of X in top-left corner
+#get rid of "X" in top-left corner
 xx[-1] <- lapply(xx[-1], FUN = function(xx.tmp){
    colnames(xx.tmp)[1] <- ""
    xx.tmp

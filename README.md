@@ -8,6 +8,7 @@ Analysis of omics data in SLIMM-T2D trial
 ## Prerequisites
 1. Download and Install R: https://cran.r-project.org/
 2. Download and Install Free RStudio Desktop: https://rstudio.com/products/rstudio/download/
+3. On Windows, you should have [Rtools](https://cran.r-project.org/bin/windows/Rtools/).
 
 ## Usage
 1. Open analyze_slimm_t2d_omics.RMD in R Studio
