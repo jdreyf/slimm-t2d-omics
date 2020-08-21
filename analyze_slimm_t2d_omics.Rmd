@@ -72,6 +72,10 @@ soma.annot <- read.csv("data/soma_annot.csv", row.names = 1)
 met.mat <- read.csv("data/met_mat_norm.csv", row.names=1)
 diff.met.mat <- make_diff_mat(met.mat)
 met.annot <- read.csv("data/met_annot_with_chebi.csv", row.names = 1)
+
+met.mat.na <- read.csv("data/met_mat_norm_no_impute.csv", row.names=1)
+# met.mat.na <- met.mat.na[rowMeans(is.na(met.mat.na)) <= 0.05,]
+diff.met.mat.na <- make_diff_mat(met.mat.na)
 ```
 
 ```{r grp}
@@ -88,6 +92,7 @@ Samples in 12mo metabolomics and proteomics are identical, so create diff_mats a
 ```{r dan12}
 dsoma12 <- diff.soma.mat[,grep("_12$", colnames(diff.soma.mat))]
 dmet12 <- diff.met.mat[,grep("_12$", colnames(diff.met.mat))]
+dmet12.na <- diff.met.mat.na[,grep("_12$", colnames(diff.met.mat.na))]
 ```
 
 Calculate metadata differences from baseline and remove samples with too many NAs, who shouldn't be used in Hitman.
@@ -184,10 +189,18 @@ We summarize that the number of proteins significant at FDR `r FDR`:
 ```{r met ezl}
 #mets don't have 24mo time
 met.stats <- limma_contrasts(met.mat, grp=grp[colnames(met.mat)], contr.v1[-4])
-met.diff.stats <- limma_contrasts(diff.met.mat, grp=grp[colnames(diff.met.mat)], contr=contr.v1[-c(1, 4)], add.means = FALSE)
+met.diff.stats <- limma_contrasts(diff.met.mat, grp=grp[colnames(diff.met.mat)], contr=contr.v1[-c(1, 4)], 
+                                  add.means = FALSE)
 des.met.diff.bmi <- des.diff.bmi[,setdiff(colnames(des.diff.bmi), c("DWM_24", "RYGB_24"))]
 met.bmi.diff.stats <- signif(limma_contrasts(diff.met.mat, design = des.met.diff.bmi[colnames(diff.met.mat),], 
                                               contr=contr.bmi[-3], add.means = FALSE), 3)
+# na
+met.stats.na <- limma_contrasts(met.mat.na, grp=grp[colnames(met.mat.na)], contr.v1[-4])
+met.diff.stats.na <- limma_contrasts(diff.met.mat.na, grp=grp[colnames(diff.met.mat.na)], contr=contr.v1[-c(1, 4)], 
+                                     add.means = FALSE)
+met.bmi.diff.stats.na <- signif(limma_contrasts(diff.met.mat.na, design = des.met.diff.bmi[colnames(diff.met.mat.na),], 
+                                              contr=contr.bmi[-3], add.means = FALSE), 3)
+
 #order avg cols
 avg.cols <- intersect(avg.grps, grep("avg$", colnames(met.stats), value = TRUE))
 t0.cols <- grep("^RYGBvsDWMat0mo", colnames(met.stats), value = TRUE)
@@ -195,6 +208,10 @@ t0.cols <- grep("^RYGBvsDWMat0mo", colnames(met.stats), value = TRUE)
 met.tab <- data.frame(met.stats[rownames(met.diff.stats), c(avg.cols, t0.cols)], met.diff.stats, 
                       met.bmi.diff.stats[rownames(met.diff.stats),], met.annot[rownames(met.diff.stats),])
 write.csv(df_signif(met.tab), "./results/met_supp_table.csv", na="")
+# na
+met.tab.na <- data.frame(met.stats.na[rownames(met.diff.stats.na), c(avg.cols, t0.cols)], met.diff.stats.na, 
+                      met.bmi.diff.stats.na[rownames(met.diff.stats.na),], met.annot[rownames(met.diff.stats.na),])
+write.csv(df_signif(met.tab.na), "./results/met_supp_table_no_impute.csv", na="")
 ```
 
 Analyze differences between groups at each time point, and these differences after taking each person's difference from baseline. The met supp table with means per group per time point and statistics on differences between groups on differences from baseline is at [met_supp_table.csv](./results/met_supp_table.csv).
@@ -312,10 +329,18 @@ hm.a1c.soma.df <- data.frame(signif(hm.a1c.soma, 3), soma.annot[rownames(hm.a1c.
 write.csv(hm.a1c.soma.df, "./results/HbA1c12_vs_soma3_hitman.csv")
 #met
 nms.tmp <- intersect(gsub("_3$", "", grep("_3$", colnames(diff.met.mat), value=TRUE)), rownames(diff.pheno12))
-hm.a1c.met <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="RYGB"), M=diff.met.mat[,paste0(nms.tmp, "_3")], 
-                  Y=diff.pheno12[nms.tmp, "HbA1c"])
+hm.a1c.met <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="RYGB"), 
+                     M=diff.met.mat[,paste0(nms.tmp, "_3")], 
+                     Y=diff.pheno12[nms.tmp, "HbA1c"])
 hm.a1c.met.df <- data.frame(signif(hm.a1c.met, 3), met.annot[rownames(hm.a1c.met),])
 write.csv(hm.a1c.met.df, "./results/HbA1c12_vs_met3_hitman.csv")
+#met.na
+diff.met.mat.na.ss <- diff.met.mat.na[rowMeans(is.na(diff.met.mat.na)) < 0.2,]
+hm.a1c.met.na <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="RYGB"),
+                     M=diff.met.mat.na.ss[,paste0(nms.tmp, "_3")], 
+                     Y=diff.pheno12[nms.tmp, "HbA1c"])
+hm.a1c.met.na.df <- data.frame(signif(hm.a1c.met.na, 3), met.annot[rownames(hm.a1c.met.na),])
+write.csv(hm.a1c.met.na.df, "./results/HbA1c12_vs_met3_hitman_no_impute.csv")
 
 #clinical
 #remove: arm & grp not a difference; creatinine not measured at 3mo
@@ -383,22 +408,23 @@ We combine several mediation plotsinto the Hitman figure using `ggplot2 facet_wr
 # use facet to combine
 # need to coerce to vector with as.numeric
 ghr <- as.numeric(diff.soma.mat["SL005168", paste0(rownames(diff.pheno12), "_3")])
+# COLEC11 <- as.numeric(diff.soma.mat["SL006713", paste0(rownames(diff.pheno12), "_3")])
+# TIMP1 <- as.numeric(diff.soma.mat["SL000591", paste0(rownames(diff.pheno12), "_3")])
 
 met.cols <- intersect(paste0(rownames(diff.pheno12), "_3"), colnames(diff.met.mat))
 pheno.cols <- sub("_3$", "", met.cols)
 ret <- as.numeric(diff.met.mat["C1806", met.cols])
 # php <- as.numeric(diff.met.mat["C35127", met.cols])
-php <- as.numeric(diff.met.mat["C35127", met.cols])
 
 hm.df <- rbind(data.frame(x=ghr, a1c=diff.pheno12[,"HbA1c"], Arm=diff.pheno12[,"arm"], an="GHR"),
-               data.frame(x=ret, a1c=diff.pheno12[pheno.cols, "HbA1c"], Arm=diff.pheno12[pheno.cols, "arm"], an="Retinol"),
-               data.frame(x=php, a1c=diff.pheno12[pheno.cols, "HbA1c"], Arm=diff.pheno12[pheno.cols, "arm"], an="Pro-hydroxy-Pro"))
+               data.frame(x=ret, a1c=diff.pheno12[pheno.cols, "HbA1c"], Arm=diff.pheno12[pheno.cols, "arm"], an="Retinol"))
 
-hm.df$an <- factor(hm.df$an, levels=c('Retinol', 'GHR', 'Pro-hydroxy-Pro'), ordered=TRUE)
+hm.df$an <- factor(hm.df$an, levels=c('Retinol', 'GHR'), ordered=TRUE)
 ggp <- ggplot(data=hm.df, mapping = aes(x=x, y=a1c, color=Arm)) + facet_wrap(facets="~an", nrow=1, scales="free_x") + geom_point(alpha=0.7) + 
-  geom_smooth(method="lm", se=FALSE) + xlab(paste("Log2 abundance change (3 mo)")) + ylab("HbA1c change (1 yr)") + theme_bw() +
+  geom_smooth(method="lm", se=FALSE) + xlab(paste("Baseline-corrected log2 abundance (3 mo)")) + 
+  ylab("HbA1c change (1 yr)") + theme_bw() +
   theme(text=element_text(size=7)) + theme(axis.text.x=element_text(size=5)) + scale_colour_manual(values=c("blue", "red"))
-ggsave(file="figures/hitman_figure.pdf", plot=ggp, height=2)
+ggsave(file="figures/hitman_figure.pdf", plot=ggp, height=3)
 ```
 
 ## HOMA-IR
@@ -684,6 +710,9 @@ stopifnot(abs(diff.soma.mat["SL000252", "BLUSH_3"] - -0.232048936) < 10**-6)
 
 # stopifnot(rownames(diff.pheno12)==rownames(diff.pheno12.hm))
 
+stopifnot(cor.array["GHR", "pro-hydroxy-pro", "p"] < 10**(-5))
+stopifnot(cor.array["GHR", "pro-hydroxy-pro", "FDR"] < 0.002)
+
 #from causal plot
 dm <- diff.soma.mat["SL006694", grep("_3$", colnames(diff.soma.mat))]
 stopifnot(dm < 0.5, dm > -2)
@@ -705,4 +734,14 @@ stopifnot(cor.r["OMD", "pro-hydroxy-pro"] == 0.521)
 # signif(cor.array[,,"p"][wm], 3)
 
 stopifnot(nrow(cor.r) <= 56)
+
+stopifnot(cor(as.numeric(met.mat["C35127",]), as.numeric(met.mat.na["C35127",])) >= 0.99)
 ```
+
+Explore missingness
+```{r}
+nna <- rowMeans(is.na(met.mat.na))
+nna.df <- data.frame(RYGBvsDWMat3mo.p=met.tab.na[, "RYGBvsDWMat3mo.p"], prop.na=nna[rownames(met.tab.na)], met.annot[rownames(met.tab.na),])
+nna.df <- nna.df[order(nna.df$RYGBvsDWMat3mo.p),]
+```
+

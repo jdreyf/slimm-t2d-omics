@@ -53,6 +53,8 @@ This calculation takes ~30 min on my desktop PC. Our simulation results are at [
 ```{r, eval=FALSE}
 # t2=0.39; b1=0 < 0.05 with ngenes=2 & their SD in sim_barfield = 2
 # nsamp=50, so limited effect of limma
+# tried with one of b1t2 < 0, and Hitman had even better control of its false pos rate
+# tried w/ alpha=0.7, and hitman previously did not control false pos rate, but does after modification
 (prop.sig.hit <- Hitman:::sim_barfield(med.fnm = "hitman", b1t2.v=c(0, 0.14, 0.39), nsim = nsim, ngene=9, nsamp = nsamp, t1=t1))
 write.csv(prop.sig.hit, paste0("./validation/sim_hitman_nsamp", nsamp, "_nsim", nsim, "_t1", t1, ".csv"), na="")
 ```
