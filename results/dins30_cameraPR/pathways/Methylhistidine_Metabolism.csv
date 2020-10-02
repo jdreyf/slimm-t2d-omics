@@ -1,4 +1,4 @@
 "","EMY.chisq","EMY.p","EMY.FDR","EM.z","EM.p","MY.z","MY.p","annot"
-"CHEBI:15971",0.868,0.351,0.925,3.19,0.00144,-0.381,0.703,"histidine"
-"CHEBI:27596",1.2,0.273,0.925,-0.604,0.546,1.12,0.265,"3-methylhistidine"
-"CHEBI:16680",0.0522,0.819,0.926,1.57,0.117,0.913,0.362,"S-adenosylhomocysteine (SAH)"
+"CHEBI:15971",0.868,0.351,0.996,3.19,0.00144,-0.381,0.703,"histidine"
+"CHEBI:27596",1.2,0.273,0.996,-0.604,0.546,1.12,0.265,"3-methylhistidine"
+"CHEBI:16680",0,1,1,1.57,0.117,0.913,0.362,"S-adenosylhomocysteine (SAH)"

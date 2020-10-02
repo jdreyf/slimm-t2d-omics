@@ -1,4 +1,4 @@
 "","EMY.chisq","EMY.p","EMY.FDR","EM.z","EM.p","MY.z","MY.p","annot"
-"CHEBI:28867",1.39,0.238,0.932,-4.19,2.73e-05,0.712,0.476,"propionylcarnitine"
-"CHEBI:15741",0.0756,0.783,0.953,-1.47,0.143,-0.784,0.433,"succinate"
-"CHEBI:30915",0.708,0.4,0.932,-0.253,0.8,0.772,0.44,"alpha-ketoglutarate"
+"CHEBI:28867",1.39,0.238,1,-4.19,2.73e-05,0.712,0.476,"propionylcarnitine"
+"CHEBI:30915",0.708,0.4,1,-0.253,0.8,0.772,0.44,"alpha-ketoglutarate"
+"CHEBI:15741",0,1,1,-1.47,0.143,-0.784,0.433,"succinate"

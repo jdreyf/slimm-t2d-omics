@@ -1,4 +1,4 @@
 "","EMY.chisq","EMY.p","EMY.FDR","EM.z","EM.p","MY.z","MY.p","annot"
-"CHEBI:16027",1.32,0.251,0.925,1.08,0.278,-0.671,0.502,"adenosine 5'-monophosphate (AMP)"
-"CHEBI:7916",0.188,0.665,0.926,-2.35,0.019,-0.426,0.67,"pantothenate"
-"CHEBI:17561",0.0597,0.807,0.926,-1.91,0.0565,-0.867,0.386,"cysteine"
+"CHEBI:16027",1.32,0.251,0.996,1.08,0.278,-0.671,0.502,"adenosine 5'-monophosphate (AMP)"
+"CHEBI:17561",0,1,1,-1.91,0.0565,-0.867,0.386,"cysteine"
+"CHEBI:7916",0,1,1,-2.35,0.019,-0.426,0.67,"pantothenate"

@@ -49,11 +49,11 @@ FC <- 1.5
 
 # Read data and take the difference from baseline per person
 
-Clinical metadata at [clin_metadata.csv](./data/clin_metadata.csv). This file also used for uploads to GEO. Here, change colnames in workflow, so can use them more easily in ggplot2. After taking differences of phenotypes, we remove individual points from R object *diff.pheno*, such as Topaz_3, who have NA in every measure.
+Clinical metadata at [clin_metadata.csv](./data/clin_metadata.csv). This file also used for uploads to GEO. Here, change column names in workflow, so can use them more easily in ggplot2. After taking differences of phenotypes, we remove individual points from R object *diff.pheno*, who have NA in every measure, such as Topaz_3.
 
 The original SOMAscan dataset was parsed to write [soma_annot.csv](./data/soma_annot.csv) and log2-transformed to write [soma_mat.csv](./data/soma_mat.csv).
 
-The original metabolomics dataset was parsed, filtered, and log2-transformed to write [met_mat_norm.csv](./data/met_mat_norm.csv). Annotations for metabolites did not originally have CHEBI annotations, but these were needed for Pathaway analysis via network-smoothing to match our network (Pathway Commons PC9) and pathway database (SMPDB), so we added these automatically using CTSgetR. However, CTSgetR wasn't given the chirality of many compounds, so we found that 3-hydroxyisobutyrate had CHEBI:11805, whereas SMPDB had (S)-3-Hydroxyisobutyric acid (CHEBI:37373), so we manually fixed 3-hydroxyisobutyrate to have CHEBI:37373, and wrote  [met_annot_with_chebi.csv](./data/met_annot_with_chebi.csv).
+The original metabolomics dataset was parsed, filtered, and log2-transformed to write [met_mat_norm.csv](./data/met_mat_norm.csv). Annotations for metabolites did not originally have CHEBI annotations, so we added these automatically using CTSgetR. However, CTSgetR wasn't given the chirality of many compounds, so we found that 3-hydroxyisobutyrate had CHEBI:11805, whereas SMPDB had (S)-3-Hydroxyisobutyric acid (CHEBI:37373), so we manually fixed 3-hydroxyisobutyrate to have CHEBI:37373, and wrote  [met_annot_with_chebi.csv](./data/met_annot_with_chebi.csv).
 
 ```{r read}
 pheno <- read.csv("data/clin_metadata.csv", row.names = 1, check.names = FALSE)
@@ -72,6 +72,8 @@ soma.annot <- read.csv("data/soma_annot.csv", row.names = 1)
 met.mat <- read.csv("data/met_mat_norm.csv", row.names=1)
 diff.met.mat <- make_diff_mat(met.mat)
 met.annot <- read.csv("data/met_annot_with_chebi.csv", row.names = 1)
+# rm pathway sort order column
+met.annot <- met.annot[, setdiff(colnames(met.annot), "PATHWAY_SORTORDER")]
 
 met.mat.na <- read.csv("data/met_mat_norm_no_impute.csv", row.names=1)
 # met.mat.na <- met.mat.na[rowMeans(is.na(met.mat.na)) <= 0.05,]
@@ -87,6 +89,18 @@ avg.grps <- paste0(rep(c("DWM", "RYGB"), each=length(mo.v)), "_", mo.v, ".avg")
 grp <- setNames(pheno$grp, nm=rownames(pheno))
 ```
 
+The table of numbers in each arm that had HbA1c measurements:
+
+`r kable(table(pheno[!is.na(pheno$HbA1c), c("Mo", "arm")]))`
+
+The table of numbers in each arm that were assayed by SomaLogic:
+
+`r kable(table(pheno[colnames(soma.mat), c("Mo", "arm")]))`
+
+The able of numbers in each arm that were assayed by metabolomics:
+
+`r kable(table(pheno[colnames(met.mat), c("Mo", "arm")]))`
+
 Samples in 12mo metabolomics and proteomics are identical, so create diff_mats at 1 year. Also, create a combined annotation.
 
 ```{r dan12}
@@ -95,19 +109,40 @@ dmet12 <- diff.met.mat[,grep("_12$", colnames(diff.met.mat))]
 dmet12.na <- diff.met.mat.na[,grep("_12$", colnames(diff.met.mat.na))]
 ```
 
-Calculate metadata differences from baseline and remove samples with too many NAs, who shouldn't be used in Hitman.
+Calculate metadata differences from baseline and remove samples with too many NAs, who shouldn't be used in Hitman. Write [clin_metadata_diff.csv](./results/clin_metadata_diff.csv) for Table S1. 
 
 ```{r diff.pheno}
 diff.pheno <- t(make_diff_mat(t(pheno[,setdiff(colnames(pheno), c('Acrostic', 'arm', 'Height', 'Mo', 'grp'))])))
 # dmcure has NA as 9 and is a computed column, so doesn't need to be tested in na.row
 na.rows <- which(rowMeans(is.na(diff.pheno[,setdiff(colnames(diff.pheno), c("month", "dmcure"))])) == 1)
 diff.pheno <- diff.pheno[-na.rows,]
+
+# write to table s1
+diff.clin <- data.frame(pheno[rownames(diff.pheno), c("Acrostic", "arm", "Mo")], diff.pheno)
+colnames(diff.clin)[-c(1, 3)] <- clin.names.map[match(sub("^X6", "6", colnames(diff.clin))[-c(1, 3)], 
+                                                      sub("/", ".", clin.names.map$abbrev)), "full_name"]
+write.csv(diff.clin, "results/clin_metadata_diff.csv", na="")
+```
+
+
+```{r, diff.pheno2}
 diff.pheno <- data.frame(diff.pheno, arm=pheno[rownames(diff.pheno), c("arm")], grp=pheno[rownames(diff.pheno), c("grp")],
                          check.names = FALSE)
 diff.pheno3 <- diff.pheno[grep("_3$", rownames(diff.pheno)),]
 diff.pheno12 <- diff.pheno[grep("_12$", rownames(diff.pheno)),]
 rownames(diff.pheno12) <- gsub("_12$", "", rownames(diff.pheno12))
+
+diff.pheno18 <- diff.pheno[grep("_18$", rownames(diff.pheno)),]
+rownames(diff.pheno18) <- gsub("_18$", "", rownames(diff.pheno18))
+
+diff.pheno24 <- diff.pheno[grep("_24$", rownames(diff.pheno)),]
+rownames(diff.pheno24) <- gsub("_24$", "", rownames(diff.pheno24))
+
+diff.pheno36 <- diff.pheno[grep("_36$", rownames(diff.pheno)),]
+rownames(diff.pheno36) <- gsub("_36$", "", rownames(diff.pheno36))
 ```
+
+Test association of metabolite abundance to missingness
 
 # Differential abundance between groups
 
@@ -171,11 +206,25 @@ labCol <- gsub("RYGBvsDWMat|mo\\.logFC", "", colnames(heat.mat))
 ezheat(object=heat.mat, labrows = labRow,  name="soma_FDR15_fc50pct_heat", sc="none", labcols = labCol, clip=log2(3), 
        reorder_rows = TRUE, reorder_cols = FALSE, fontsize_row = 8, fontsize_col = 16, angle_col = "0")
 heat.df <- data.frame(signif(heat.mat, 3), soma.annot[rownames(heat.mat),])
-write.csv(heat.df, "../results/soma_heat.csv")
+write.csv(heat.df, "soma_heat.csv")
 setwd("..")
 ```
 
-The heatmap w/ `r nrow(heat.df)` analytes is at [soma_FDR15_fc50pct_heat.pdf](./results/soma_FDR15_fc50pct_heat.pdf). 
+The heatmap w/ `r nrow(heat.df)` analytes is at [soma_FDR15_fc50pct_heat.pdf](./results/soma_FDR15_fc50pct_heat.pdf).
+
+```{r soma.heat.per.sample, eval=FALSE}
+# for reviewer
+# soma.tmp <- cbind(soma.mat[soma.sig.lfc.nobmi, grep("_0$", colnames(soma.mat))],
+#                   diff.soma.mat[soma.sig.lfc.nobmi, ])
+
+pheno.tmp <- pheno[colnames(soma.mat), c("Mo", "arm")]
+pheno.tmp <- pheno.tmp[order(pheno.tmp$Mo, pheno.tmp$arm),]
+
+setwd("figures")
+ezheat(object=soma.mat[soma.sig.lfc.nobmi, rownames(pheno.tmp)], pheno.df = pheno.tmp, labrows = labRow, 
+       sc = "ctr", name = "soma_heat_per_sample", fontsize_col = 2, reorder_rows = TRUE, clip = 2)
+setwd("..")
+```
 
 ### Text
 
@@ -208,13 +257,20 @@ t0.cols <- grep("^RYGBvsDWMat0mo", colnames(met.stats), value = TRUE)
 met.tab <- data.frame(met.stats[rownames(met.diff.stats), c(avg.cols, t0.cols)], met.diff.stats, 
                       met.bmi.diff.stats[rownames(met.diff.stats),], met.annot[rownames(met.diff.stats),])
 write.csv(df_signif(met.tab), "./results/met_supp_table.csv", na="")
+
 # na
 met.tab.na <- data.frame(met.stats.na[rownames(met.diff.stats.na), c(avg.cols, t0.cols)], met.diff.stats.na, 
                       met.bmi.diff.stats.na[rownames(met.diff.stats.na),], met.annot[rownames(met.diff.stats.na),])
 write.csv(df_signif(met.tab.na), "./results/met_supp_table_no_impute.csv", na="")
+
+# ntop <- 20
+# len.int <- length(intersect(rownames(met.diff.stats)[order(met.diff.stats$RYGBvsDWMat3mo.p)][1:ntop],
+#       rownames(met.diff.stats.na)[order(met.diff.stats.na$RYGBvsDWMat3mo.p)][1:ntop]))
 ```
 
 Analyze differences between groups at each time point, and these differences after taking each person's difference from baseline. The met supp table with means per group per time point and statistics on differences between groups on differences from baseline is at [met_supp_table.csv](./results/met_supp_table.csv).
+
+We find that the results from not imputing missing values are very similar to those from imputing. For example, if we consider the top 20 metabolites between groups at 3 months, we find that 
 
 ```{r met_venns}
 setwd("./results")
@@ -284,6 +340,20 @@ diff.met.mat3.ss <- data.matrix(diff.met.mat[top.met, nms.tmp])
 rownames(diff.met.mat3.ss) <- met.annot[rownames(diff.met.mat3.ss), "BIOCHEMICAL"]
 ```
 
+Cluster proteins and metabolites.
+
+```{r clust}
+dsm3 <- t(scale(t(diff.soma.mat3.ss), center = TRUE, scale = TRUE))
+dsm3.hc <- hclust(dist(dsm3), method="ward.D2")
+diff.soma.mat3.ss <- diff.soma.mat3.ss[dsm3.hc$order, ]
+
+dmm3 <- t(scale(t(diff.met.mat3.ss), center = TRUE, scale = TRUE))
+dmm3.hc <- hclust(dist(dmm3), method="ward.D2")
+diff.met.mat3.ss <- diff.met.mat3.ss[dmm3.hc$order, ]
+```
+
+Build corr matrix
+
 ```{r build_corr_mat}
 dimnms <- list(rownames(diff.soma.mat3.ss), rownames(diff.met.mat3.ss), c("r", "p", "FDR"))
 cor.array <- array(data=NA, dim = sapply(dimnms, length), dimnames=dimnms)
@@ -307,6 +377,17 @@ colnames(cor.r.out)[ncol(cor.r.out)] <- cor.r.colnm
 
 # colnames(cor.r.out)[(ncol(cor.r.out)-1)] <- NA
 write.csv(t(cor.r.out), "results/soma_met_corr_coeffs.csv", na = "")
+```
+
+Find strong correlations to comment upon
+
+```{r}
+cor.tab <- t(cor.r.out)
+wh <- which(abs(cor.tab) > 0.6, arr.ind = TRUE)
+cor.tab.ss <- cor.tab[unique(wh[,1]), unique(wh[,2])]
+mets.sss <- c("pro-hydroxy-pro", "beta-hydroxyisovalerate", "isovalerylcarnitine")
+prots.sss <- c("IGFBP2", "CNDP1", "GHR")
+cor.array[prots.sss, mets.sss, ]
 ```
 
 
@@ -336,8 +417,9 @@ hm.a1c.met.df <- data.frame(signif(hm.a1c.met, 3), met.annot[rownames(hm.a1c.met
 write.csv(hm.a1c.met.df, "./results/HbA1c12_vs_met3_hitman.csv")
 #met.na
 diff.met.mat.na.ss <- diff.met.mat.na[rowMeans(is.na(diff.met.mat.na)) < 0.2,]
+nms.tmp <- intersect(gsub("_3$", "", grep("_3$", colnames(diff.met.mat), value=TRUE)), rownames(diff.pheno12))
 hm.a1c.met.na <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="RYGB"),
-                     M=diff.met.mat.na.ss[,paste0(nms.tmp, "_3")], 
+                     M=diff.met.mat.na[,paste0(nms.tmp, "_3")], 
                      Y=diff.pheno12[nms.tmp, "HbA1c"])
 hm.a1c.met.na.df <- data.frame(signif(hm.a1c.met.na, 3), met.annot[rownames(hm.a1c.met.na),])
 write.csv(hm.a1c.met.na.df, "./results/HbA1c12_vs_met3_hitman_no_impute.csv")
@@ -357,6 +439,58 @@ clin3.hm <- Hitman:::hitman(E=arm.v, M=t(diff.pheno3), Y=HbA1c)
 write.csv(signif(clin3.hm, 3), "./results/HbA1c12_vs_clin3_hitman.csv", na="")
 ```
 
+We also test protein changes at 3 months vs. HbA1c changes at 24 months, and protein & metabolite changes at 36 months.
+
+```{r hm_a1c_24_36}
+## 18 months
+diff.pheno18.ss <- diff.pheno18[!is.na(diff.pheno18$HbA1c),]
+nms.tmp <- intersect(gsub("_3$", "", grep("_3$", colnames(diff.soma.mat), value=TRUE)), rownames(diff.pheno18.ss))
+hm.a1c18.soma <- hitman(E=as.numeric(diff.pheno18[nms.tmp, "arm"]=="RYGB"), 
+                  M=diff.soma.mat[,paste0(nms.tmp, "_3")], 
+                  Y=diff.pheno18[nms.tmp, "HbA1c"])
+hm.a1c18.soma.df <- data.frame(signif(hm.a1c18.soma, 3), soma.annot[rownames(hm.a1c18.soma),])
+# write.csv(hm.a1c.soma.df, "./results/HbA1c18_vs_soma3_hitman.csv")
+
+nms.tmp <- intersect(gsub("_3$", "", grep("_3$", colnames(diff.met.mat), value=TRUE)), rownames(diff.pheno18.ss))
+hm.a1c18.met <- hitman(E=as.numeric(diff.pheno18[nms.tmp, "arm"]=="RYGB"), 
+                     M=diff.met.mat[,paste0(nms.tmp, "_3")], 
+                     Y=diff.pheno18[nms.tmp, "HbA1c"])
+hm.a1c18.met.df <- data.frame(signif(hm.a1c18.met, 3), met.annot[rownames(hm.a1c18.met),])
+# write.csv(hm.a1c.met.df, "./results/HbA1c18_vs_met3_hitman.csv")
+
+## 24 months
+diff.pheno24.ss <- diff.pheno24[!is.na(diff.pheno24$HbA1c),]
+nms.tmp <- intersect(gsub("_3$", "", grep("_3$", colnames(diff.soma.mat), value=TRUE)), rownames(diff.pheno24.ss))
+hm.a1c24.soma <- hitman(E=as.numeric(diff.pheno24[nms.tmp, "arm"]=="RYGB"), 
+                  M=diff.soma.mat[,paste0(nms.tmp, "_3")], 
+                  Y=diff.pheno24[nms.tmp, "HbA1c"])
+hm.a1c24.soma.df <- data.frame(signif(hm.a1c24.soma, 3), soma.annot[rownames(hm.a1c24.soma),])
+# write.csv(hm.a1c.soma.df, "./results/HbA1c24_vs_soma3_hitman.csv")
+
+nms.tmp <- intersect(gsub("_3$", "", grep("_3$", colnames(diff.met.mat), value=TRUE)), rownames(diff.pheno24.ss))
+hm.a1c24.met <- hitman(E=as.numeric(diff.pheno24[nms.tmp, "arm"]=="RYGB"), 
+                     M=diff.met.mat[,paste0(nms.tmp, "_3")], 
+                     Y=diff.pheno24[nms.tmp, "HbA1c"])
+hm.a1c24.met.df <- data.frame(signif(hm.a1c24.met, 3), met.annot[rownames(hm.a1c24.met),])
+# write.csv(hm.a1c.met.df, "./results/HbA1c24_vs_met3_hitman.csv")
+
+## 36 months
+diff.pheno36.ss <- diff.pheno36[!is.na(diff.pheno36$HbA1c),]
+nms.tmp <- intersect(gsub("_3$", "", grep("_3$", colnames(diff.soma.mat), value=TRUE)), rownames(diff.pheno36.ss))
+hm.a1c36.soma <- hitman(E=as.numeric(diff.pheno36[nms.tmp, "arm"]=="RYGB"), 
+                  M=diff.soma.mat[,paste0(nms.tmp, "_3")], 
+                  Y=diff.pheno36[nms.tmp, "HbA1c"])
+hm.a1c36.soma.df <- data.frame(signif(hm.a1c36.soma, 3), soma.annot[rownames(hm.a1c36.soma),])
+# write.csv(hm.a1c.soma.df, "./results/HbA1c36_vs_soma3_hitman.csv")
+
+nms.tmp <- intersect(gsub("_3$", "", grep("_3$", colnames(diff.met.mat), value=TRUE)), rownames(diff.pheno36.ss))
+hm.a1c36.met <- hitman(E=as.numeric(diff.pheno36[nms.tmp, "arm"]=="RYGB"), 
+                     M=diff.met.mat[,paste0(nms.tmp, "_3")], 
+                     Y=diff.pheno36[nms.tmp, "HbA1c"])
+hm.a1c36.met.df <- data.frame(signif(hm.a1c36.met, 3), met.annot[rownames(hm.a1c36.met),])
+# write.csv(hm.a1c.met.df, "./results/HbA1c36_vs_met3_hitman.csv")
+```
+
 ### Compare clinical vs analytes
 
 ```{r}
@@ -371,9 +505,9 @@ hm.a1c.met.df.ss <- hm.a1c.met.df[hm.a1c.met.df$EMY.p < clin3.hm[1, "EMY.p"] &
                                       hm.a1c.met.df$EMY.FDR < clin3.hm[1, "EMY.FDR"],]
 ```
 
-The protein analytes more significant in p-value & FDR than any clinical mediator are: `r kable(hm.soma.top)`
+The protein analyte(s) more significant in p-value & FDR than any clinical mediator are: `r kable(hm.soma.top)`
 
-The metabolite mediators are `r hm.a1c.met.df.ss$BIOCHEMICAL`
+The metabolite mediator(s) are `r hm.a1c.met.df.ss$BIOCHEMICAL`
 
 ### Compare Hitman to joint significance
 
@@ -402,14 +536,12 @@ write.csv(js.a1c.met.df, "./results/HbA1c12_vs_met3_jointsignif.csv")
 Top analytes: GHR has FDR `r signif(js.a1c.soma.df["SL005168", "EMY.FDR"], 2)` & pro-hydroxy-pro has FDR `r signif(js.a1c.met.df["C35127", "EMY.FDR"], 2)`.
 
 ### Plot inconsistent mediation fig
-We combine several mediation plotsinto the Hitman figure using `ggplot2 facet_wrap`. We modify this figure by copy-pasting pieces into PPT, then adding text boxes for Inconsistent and Consistent mediators.
+We combine several mediation plots into the Hitman figure using `ggplot2 facet_wrap`. We modify this figure by copy-pasting pieces into PPT, then adding text boxes for Inconsistent and Consistent mediators.
 
 ```{r hm.fig}
 # use facet to combine
 # need to coerce to vector with as.numeric
 ghr <- as.numeric(diff.soma.mat["SL005168", paste0(rownames(diff.pheno12), "_3")])
-# COLEC11 <- as.numeric(diff.soma.mat["SL006713", paste0(rownames(diff.pheno12), "_3")])
-# TIMP1 <- as.numeric(diff.soma.mat["SL000591", paste0(rownames(diff.pheno12), "_3")])
 
 met.cols <- intersect(paste0(rownames(diff.pheno12), "_3"), colnames(diff.met.mat))
 pheno.cols <- sub("_3$", "", met.cols)
@@ -418,13 +550,19 @@ ret <- as.numeric(diff.met.mat["C1806", met.cols])
 
 hm.df <- rbind(data.frame(x=ghr, a1c=diff.pheno12[,"HbA1c"], Arm=diff.pheno12[,"arm"], an="GHR"),
                data.frame(x=ret, a1c=diff.pheno12[pheno.cols, "HbA1c"], Arm=diff.pheno12[pheno.cols, "arm"], an="Retinol"))
+hm.df$an <- factor(x=hm.df$an, levels=c('Retinol', 'GHR'), ordered=TRUE)
 
-hm.df$an <- factor(hm.df$an, levels=c('Retinol', 'GHR'), ordered=TRUE)
-ggp <- ggplot(data=hm.df, mapping = aes(x=x, y=a1c, color=Arm)) + facet_wrap(facets="~an", nrow=1, scales="free_x") + geom_point(alpha=0.7) + 
-  geom_smooth(method="lm", se=FALSE) + xlab(paste("Baseline-corrected log2 abundance (3 mo)")) + 
-  ylab("HbA1c change (1 yr)") + theme_bw() +
-  theme(text=element_text(size=7)) + theme(axis.text.x=element_text(size=5)) + scale_colour_manual(values=c("blue", "red"))
-ggsave(file="figures/hitman_figure.pdf", plot=ggp, height=3)
+mu.tbl <- hm.df %>% 
+  group_by(Arm, an) %>%
+  summarise(mu = mean(x))
+
+ggp <- ggplot(data=hm.df, mapping = aes(x=x, y=a1c, color=Arm)) + facet_wrap(facets = ~an, nrow=1, scales="free_x") + 
+  geom_point(alpha=0.7) + geom_smooth(method="lm", se=FALSE) + xlab(paste("Baseline-corrected log2 abundance (3 mo)")) + 
+  ylab("HbA1c change (1 yr)") + theme_bw() + theme(legend.position = "none") +
+  theme(text=element_text(size=8), axis.text.x=element_text(size=4)) + 
+  scale_colour_manual(values=c("orange", "green4")) + 
+  geom_vline(mapping=aes(xintercept=mu, color=Arm), data=mu.tbl, linetype="dashed")
+ggsave(file="figures/hitman_figure.pdf", plot=ggp, height=5.5, width=19.05, units="cm")
 ```
 
 ## HOMA-IR
@@ -447,6 +585,14 @@ hm.homair.met <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="DWM"), M=dif
                   Y=diff.pheno12[nms.tmp, "homair"])
 hm.met.df <- data.frame(signif(hm.homair.met, 3), met.annot[rownames(hm.homair.met),])
 write.csv(hm.met.df, paste0("./results/homair12_vs_met3_hitman.csv"))
+
+#met.na
+diff.met.mat.na.ss <- diff.met.mat.na[rowMeans(is.na(diff.met.mat.na)) < 0.2,]
+hm.homair.met.na <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="DWM"), 
+                      M=diff.met.mat.na.ss[,paste0(nms.tmp, "_3")], 
+                      Y=diff.pheno12[nms.tmp, "homair"])
+hm.met.na.df <- data.frame(signif(hm.homair.met.na, 3), met.annot[rownames(hm.homair.met.na),])
+write.csv(hm.met.na.df, paste0("./results/homair12_vs_met3_hitman_no_impute.csv"))
 ```
 
 ## dins030
@@ -462,13 +608,23 @@ hm.dins.soma <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="DWM"),
                   Y=diff.pheno12[nms.tmp, "dins030"])
 hm.soma.df <- data.frame(signif(hm.dins.soma, 3), soma.annot[rownames(hm.dins.soma),])
 write.csv(hm.soma.df, paste0("./results/dins030_12_vs_soma3_hitman.csv"))
+
 #met
 nms.tmp <- intersect(gsub("_3$", "", grep("_3$", colnames(diff.met.mat), value=TRUE)),
                      rownames(diff.pheno12)[!is.na(diff.pheno12$dins030)])
-hm.dins.met <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="DWM"), M=diff.met.mat[,paste0(nms.tmp, "_3")], 
-                  Y=diff.pheno12[nms.tmp, "dins030"])
+hm.dins.met <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="DWM"), 
+                      M=diff.met.mat[,paste0(nms.tmp, "_3")], 
+                      Y=diff.pheno12[nms.tmp, "dins030"])
 hm.met.df <- data.frame(signif(hm.dins.met, 3), met.annot[rownames(hm.dins.met),])
 write.csv(hm.met.df, paste0("./results/dins030_12_vs_met3_hitman.csv"))
+
+#met.na
+diff.met.mat.na.ss <- diff.met.mat.na[rowMeans(is.na(diff.met.mat.na)) < 0.2,]
+hm.dins.met.na <- hitman(E=as.numeric(diff.pheno12[nms.tmp, "arm"]=="DWM"), 
+                      M=diff.met.mat.na.ss[,paste0(nms.tmp, "_3")], 
+                      Y=diff.pheno12[nms.tmp, "dins030"])
+hm.met.na.df <- data.frame(signif(hm.dins.met.na, 3), met.annot[rownames(hm.dins.met.na),])
+write.csv(hm.met.na.df, paste0("./results/dins030_12_vs_met3_hitman_no_impute.csv"))
 ```
 
 
