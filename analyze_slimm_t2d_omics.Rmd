@@ -11,7 +11,7 @@ The installation of required R packages takes approximately 15 minutes. The RMD 
 
 Install related R packages from GitHub, if needed. This is also described in the `ezlimmaplot` README at [https://github.com/jdreyf/ezlimmaplot](https://github.com/jdreyf/ezlimmaplot). Other packages can be installed with `install.packages()`.
 
-```{r, eval=FALSE, include=FALSE}
+```{r install, eval=FALSE, include=FALSE}
 #if haven't already installed limma
 install.packages("BiocManager") #if haven't already installed BiocManager
 library(BiocManager)
@@ -270,7 +270,7 @@ write.csv(df_signif(met.tab.na), "./results/met_supp_table_no_impute.csv", na=""
 
 Analyze differences between groups at each time point, and these differences after taking each person's difference from baseline. The met supp table with means per group per time point and statistics on differences between groups on differences from baseline is at [met_supp_table.csv](./results/met_supp_table.csv).
 
-We find that the results from not imputing missing values are very similar to those from imputing. For example, if we consider the top 20 metabolites between groups at 3 months, we find that 
+We find that the results from not imputing missing values are very similar to those from imputing. 
 
 ```{r met_venns}
 setwd("./results")
@@ -311,7 +311,7 @@ The heatmap w/ `r nrow(heat.df)` analytes is at [met_FDR15_fc50pct_heat.pdf](./r
 
 ### Text
 
-We summarize that the number of proteins significant at FDR `r FDR`:  
+We summarize that the number of metabolites significant at FDR `r FDR`:  
 * At baseline: `r sum(met.tab$RYGBvsDWMat0mo.FDR < FDR)`  
 * At 3 mo in unadj: `r sum(met.tab$RYGBvsDWMat3mo.FDR < FDR)`; whereas in adj: `r sum(met.tab$RYGBvsDWMat3mo_bmi.FDR < FDR)`. In both, not inc. log fold-change threshold, we have `r nrow(met.venn.ss)` metabolites.  
 * 3-hydroxyisobutyrate at 3mo: `r knitr::kable(met.venn.lfc["C1549", c("RYGBvsDWMat3mo_bmi.sig", "RYGBvsDWMat3mo.sig")])`  
@@ -843,6 +843,76 @@ stopifnot(colnames(soma.mat) %in% rownames(pheno))
 stopifnot(diff.pheno["RADIO_3", "HbA1c"] == pheno["RADIO_3", "HbA1c"] - pheno["RADIO_0", "HbA1c"])
 #check match to soma_and_met_diff_mat.csv
 stopifnot(abs(diff.soma.mat["SL000252", "BLUSH_3"] - -0.232048936) < 10**-6)
+
+#proteome
+fdr.t <- c("RYGBvsDWMat3mo.FDR", "RYGBvsDWMat12mo.FDR", "RYGBvsDWMat24mo.FDR", "RYGBvsDWMat36mo.FDR")
+bmi.fdr.t <- c("RYGBvsDWMat3mo_bmi.FDR", "RYGBvsDWMat12mo_bmi.FDR", "RYGBvsDWMat24mo_bmi.FDR", "RYGBvsDWMat36mo_bmi.FDR")
+lfc.t <- c("RYGBvsDWMat3mo.logFC", "RYGBvsDWMat12mo.logFC", "RYGBvsDWMat24mo.logFC", "RYGBvsDWMat36mo.logFC")
+#shbg
+stopifnot(soma.tab["SL005102", fdr.t] < 0.15)
+stopifnot(soma.tab["SL005102", bmi.fdr.t] > 0.15)
+stopifnot(soma.tab["SL005102", lfc.t] > 0)
+#adipoq
+stopifnot(soma.tab["SL004258", fdr.t][-1] < 0.15)
+stopifnot(soma.tab["SL004258", bmi.fdr.t] > 0.15)
+stopifnot(soma.tab["SL004258", lfc.t] > 0)
+#leptin
+stopifnot(soma.tab["SL000498", fdr.t][2:3] < 0.15)
+stopifnot(soma.tab["SL000498", bmi.fdr.t] > 0.15)
+stopifnot(soma.tab["SL000498", lfc.t] < 0)
+#crp
+stopifnot(soma.tab["SL000051", fdr.t][c(2,4)] < 0.15)
+stopifnot(soma.tab["SL000051", bmi.fdr.t] > 0.15)
+stopifnot(soma.tab["SL000051", lfc.t] < 0)
+#cndp1
+stopifnot(soma.tab["SL006694", fdr.t][1:2] < 0.15)
+stopifnot(soma.tab["SL006694", bmi.fdr.t][-1] > 0.15)
+stopifnot(soma.tab["SL006694", lfc.t] < 0)
+#ghr
+stopifnot(rownames(soma.tab)[soma.tab$EntrezGeneSymbol == "GHR"] == "SL005168")
+stopifnot(soma.tab["SL005168", fdr.t] < 0.15)
+stopifnot(soma.tab["SL005168", bmi.fdr.t] > 0.15)
+stopifnot(soma.tab["SL005168", lfc.t] < 0)
+#ibsp
+stopifnot(soma.tab["SL004660", fdr.t] < 0.15)
+stopifnot(soma.tab["SL004660", bmi.fdr.t][1:2] < 0.15)
+stopifnot(soma.tab["SL004660", lfc.t] > 0)
+#omd
+stopifnot(soma.tab["SL008574", fdr.t][-1] < 0.15)
+stopifnot(soma.tab["SL008574", bmi.fdr.t][-1] < 0.15)
+stopifnot(soma.tab["SL008574", lfc.t] > 0)
+#igfbp2
+stopifnot(soma.tab["SL000466", fdr.t] < 0.15)
+stopifnot(soma.tab["SL000466", bmi.fdr.t][1] < 0.15)
+stopifnot(soma.tab["SL000466", lfc.t] > 0)
+#fgf19
+stopifnot(soma.tab["SL004337", fdr.t][4] < 0.15)
+stopifnot(soma.tab["SL004337", bmi.fdr.t][4] < 0.15)
+stopifnot(soma.tab["SL004337", lfc.t] > 0)
+
+#metabolome
+#proteome
+fdr.tm <- c("RYGBvsDWMat3mo.FDR", "RYGBvsDWMat12mo.FDR", "RYGBvsDWMat36mo.FDR")
+bmi.fdr.tm <- c("RYGBvsDWMat3mo_bmi.FDR", "RYGBvsDWMat12mo_bmi.FDR", "RYGBvsDWMat36mo_bmi.FDR")
+lfc.tm <- c("RYGBvsDWMat3mo.logFC", "RYGBvsDWMat12mo.logFC", "RYGBvsDWMat36mo.logFC")
+
+met.tmp <- rownames(met.tab)[met.tab$BIOCHEMICAL == "3-hydroxyisobutyrate"]
+stopifnot(met.tab[met.tmp, fdr.tm] < 0.15)
+stopifnot(met.tab[met.tmp, bmi.fdr.tm] > 0.15)
+stopifnot(met.tab[met.tmp, lfc.tm] < 0)
+met.tmp <- rownames(met.tab)[met.tab$BIOCHEMICAL == "pro-hydroxy-pro"]
+stopifnot(met.tab[met.tmp, fdr.tm] < 0.15)
+stopifnot(met.tab[met.tmp, bmi.fdr.tm][1:2] < 0.15)
+stopifnot(met.tab[met.tmp, lfc.tm] > 0)
+met.tmp <- rownames(met.tab)[met.tab$BIOCHEMICAL == "glycochenodeoxycholate sulfate"]
+stopifnot(met.tab[met.tmp, fdr.tm] < 0.15)
+stopifnot(met.tab[met.tmp, bmi.fdr.tm] < 0.15)
+stopifnot(met.tab[met.tmp, lfc.tm] > 0)
+met.tmp <- rownames(met.tab)[met.tab$BIOCHEMICAL == "metformin"]
+stopifnot(met.tab[met.tmp, fdr.tm] < 0.15)
+stopifnot(met.tab[met.tmp, bmi.fdr.tm] < 0.15)
+stopifnot(met.tab[met.tmp, lfc.tm] < 0)
+
 #from causal plot
 dm <- diff.soma.mat["SL006694", grep("_3$", colnames(diff.soma.mat))]
 stopifnot(dm < 0.5, dm > -2)

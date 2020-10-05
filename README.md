@@ -1,5 +1,7 @@
 # slimm-t2d-omics
-Analysis of omics data in SLIMM-T2D trial
+Analysis and results from omics data in SLIMM-T2D trial. 
+
+Results included here but not in the paper include integrative pathway analysis results with links to the pathway's analytes and statistics. These statistics are from the dataset of samples available from both proteomics and metabolomics, which is a different dataset than that for the analyte-level analysis, where metabolites and proteins were tested independently and included samples that only had data in either proteomics or metabolomics. For example, we only had proteomics but not metabolomics data at 24 months, so these data were included in the proteomics analysis, and should have some effect on other time points, since the pooled variance estimate uses data from all time points.
 
 ## Download
 1. Click on the green icon "Clone or download" then "Download ZIP"
