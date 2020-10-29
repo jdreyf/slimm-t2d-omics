@@ -332,11 +332,11 @@ top.met <- rownames(mv)[order(met.annot[rownames(mv), "BIOCHEMICAL"])]
 sv <- read.csv("results/soma_heat.csv", row.names = 1)
 top.soma <- rownames(sv)[order(soma.annot[rownames(sv), "EntrezGeneSymbol"])]
 
-diff.soma.mat3.ss <- data.matrix(diff.soma.mat[top.soma, nms.tmp])
+diff.soma.mat3.ss <- data.frame(diff.soma.mat[top.soma, nms.tmp], check.names = FALSE)
 rownames(diff.soma.mat3.ss) <- soma.annot[rownames(diff.soma.mat3.ss), "EntrezGeneSymbol"]
 diff.soma.mat3.ss <- diff.soma.mat3.ss[!duplicated(rownames(diff.soma.mat3.ss)),]
 
-diff.met.mat3.ss <- data.matrix(diff.met.mat[top.met, nms.tmp])
+diff.met.mat3.ss <- data.frame(diff.met.mat[top.met, nms.tmp], check.names = FALSE)
 rownames(diff.met.mat3.ss) <- met.annot[rownames(diff.met.mat3.ss), "BIOCHEMICAL"]
 ```
 
@@ -359,7 +359,7 @@ dimnms <- list(rownames(diff.soma.mat3.ss), rownames(diff.met.mat3.ss), c("r", "
 cor.array <- array(data=NA, dim = sapply(dimnms, length), dimnames=dimnms)
 for (soma.row in rownames(diff.soma.mat3.ss)){
   for (met.row in rownames(diff.met.mat3.ss)){
-    ct <- cor.test(x=diff.soma.mat3.ss[soma.row,], y=diff.met.mat3.ss[met.row,])
+    ct <- cor.test(x=as.numeric(diff.soma.mat3.ss[soma.row,]), y=as.numeric(diff.met.mat3.ss[met.row,]))
     cor.array[soma.row, met.row, "r"] <- ct$estimate
     cor.array[soma.row, met.row, "p"] <- ct$p.value
   }
@@ -848,6 +848,7 @@ stopifnot(abs(diff.soma.mat["SL000252", "BLUSH_3"] - -0.232048936) < 10**-6)
 fdr.t <- c("RYGBvsDWMat3mo.FDR", "RYGBvsDWMat12mo.FDR", "RYGBvsDWMat24mo.FDR", "RYGBvsDWMat36mo.FDR")
 bmi.fdr.t <- c("RYGBvsDWMat3mo_bmi.FDR", "RYGBvsDWMat12mo_bmi.FDR", "RYGBvsDWMat24mo_bmi.FDR", "RYGBvsDWMat36mo_bmi.FDR")
 lfc.t <- c("RYGBvsDWMat3mo.logFC", "RYGBvsDWMat12mo.logFC", "RYGBvsDWMat24mo.logFC", "RYGBvsDWMat36mo.logFC")
+bmi.lfc.t <- c("RYGBvsDWMat3mo_bmi.logFC", "RYGBvsDWMat12mo_bmi.logFC", "RYGBvsDWMat24mo_bmi.logFC", "RYGBvsDWMat36mo_bmi.logFC")
 #shbg
 stopifnot(soma.tab["SL005102", fdr.t] < 0.15)
 stopifnot(soma.tab["SL005102", bmi.fdr.t] > 0.15)
@@ -866,35 +867,64 @@ stopifnot(soma.tab["SL000051", bmi.fdr.t] > 0.15)
 stopifnot(soma.tab["SL000051", lfc.t] < 0)
 #cndp1
 stopifnot(soma.tab["SL006694", fdr.t][1:2] < 0.15)
+stopifnot(soma.tab["SL006694", bmi.fdr.t][1] < 0.15)
 stopifnot(soma.tab["SL006694", bmi.fdr.t][-1] > 0.15)
 stopifnot(soma.tab["SL006694", lfc.t] < 0)
+stopifnot(soma.tab["SL006694", bmi.lfc.t] < 0)
 #ghr
 stopifnot(rownames(soma.tab)[soma.tab$EntrezGeneSymbol == "GHR"] == "SL005168")
 stopifnot(soma.tab["SL005168", fdr.t] < 0.15)
 stopifnot(soma.tab["SL005168", bmi.fdr.t] > 0.15)
 stopifnot(soma.tab["SL005168", lfc.t] < 0)
+stopifnot(soma.tab["SL005168", bmi.lfc.t] < 0)
+stopifnot(fc2ratio(2**as.numeric(soma.tab["SL005168", lfc.t])) < -.24)
 #ibsp
 stopifnot(soma.tab["SL004660", fdr.t] < 0.15)
 stopifnot(soma.tab["SL004660", bmi.fdr.t][1:2] < 0.15)
 stopifnot(soma.tab["SL004660", lfc.t] > 0)
+stopifnot(soma.tab["SL004660", bmi.lfc.t] > 0)
 #omd
 stopifnot(soma.tab["SL008574", fdr.t][-1] < 0.15)
 stopifnot(soma.tab["SL008574", bmi.fdr.t][-1] < 0.15)
 stopifnot(soma.tab["SL008574", lfc.t] > 0)
+stopifnot(soma.tab["SL008574", bmi.lfc.t] > 0)
 #igfbp2
 stopifnot(soma.tab["SL000466", fdr.t] < 0.15)
 stopifnot(soma.tab["SL000466", bmi.fdr.t][1] < 0.15)
 stopifnot(soma.tab["SL000466", lfc.t] > 0)
+stopifnot(soma.tab["SL000466", bmi.lfc.t] > 0)
 #fgf19
 stopifnot(soma.tab["SL004337", fdr.t][4] < 0.15)
 stopifnot(soma.tab["SL004337", bmi.fdr.t][4] < 0.15)
 stopifnot(soma.tab["SL004337", lfc.t] > 0)
+stopifnot(soma.tab["SL004337", bmi.lfc.t] > 0)
+#cfb
+stopifnot(soma.tab["SL000414", fdr.t][-1] < 0.15)
+stopifnot(soma.tab["SL000414", bmi.fdr.t][-1] < 0.15)
+stopifnot(soma.tab["SL000414", lfc.t] < 0)
+stopifnot(soma.tab["SL000414", bmi.lfc.t] < 0)
+
+soma.tmp <- rownames(soma.tab)[soma.tab$EntrezGeneSymbol %in% c("CFB")]
+stopifnot(soma.tab[soma.tmp, fdr.t][-1] < 0.15)
+stopifnot(soma.tab[soma.tmp, bmi.fdr.t][-1] < 0.15)
+stopifnot(soma.tab[soma.tmp, lfc.t] < 0)
+stopifnot(soma.tab[soma.tmp, bmi.lfc.t] < 0)
+soma.tmp <- rownames(soma.tab)[soma.tab$EntrezGeneSymbol %in% c("RBP4")]
+stopifnot(soma.tab[soma.tmp, fdr.t] > 0.15)
+stopifnot(soma.tab[soma.tmp, bmi.fdr.t] > 0.15)
+stopifnot(soma.tab[soma.tmp, lfc.t][-3] < 0)
+stopifnot(soma.tab[soma.tmp, bmi.lfc.t] < 0)
+soma.tmp <- rownames(soma.tab)[soma.tab$EntrezGeneSymbol %in% c("IGFBP1", "IGFBP2", "IGFBP3")]
+stopifnot(soma.tab[soma.tmp, fdr.t] > 0.15)
+stopifnot(soma.tab[soma.tmp, bmi.fdr.t] > 0.15)
+stopifnot(soma.tab[soma.tmp, lfc.t] > 0)
+# stopifnot(soma.tab[soma.tmp, bmi.lfc.t] < 0)
 
 #metabolome
-#proteome
 fdr.tm <- c("RYGBvsDWMat3mo.FDR", "RYGBvsDWMat12mo.FDR", "RYGBvsDWMat36mo.FDR")
 bmi.fdr.tm <- c("RYGBvsDWMat3mo_bmi.FDR", "RYGBvsDWMat12mo_bmi.FDR", "RYGBvsDWMat36mo_bmi.FDR")
 lfc.tm <- c("RYGBvsDWMat3mo.logFC", "RYGBvsDWMat12mo.logFC", "RYGBvsDWMat36mo.logFC")
+bmi.lfc.tm <- c("RYGBvsDWMat3mo_bmi.logFC", "RYGBvsDWMat12mo_bmi.logFC", "RYGBvsDWMat36mo_bmi.logFC")
 
 met.tmp <- rownames(met.tab)[met.tab$BIOCHEMICAL == "3-hydroxyisobutyrate"]
 stopifnot(met.tab[met.tmp, fdr.tm] < 0.15)
@@ -904,14 +934,32 @@ met.tmp <- rownames(met.tab)[met.tab$BIOCHEMICAL == "pro-hydroxy-pro"]
 stopifnot(met.tab[met.tmp, fdr.tm] < 0.15)
 stopifnot(met.tab[met.tmp, bmi.fdr.tm][1:2] < 0.15)
 stopifnot(met.tab[met.tmp, lfc.tm] > 0)
+stopifnot(met.tab[met.tmp, bmi.lfc.tm] > 0)
 met.tmp <- rownames(met.tab)[met.tab$BIOCHEMICAL == "glycochenodeoxycholate sulfate"]
-stopifnot(met.tab[met.tmp, fdr.tm] < 0.15)
-stopifnot(met.tab[met.tmp, bmi.fdr.tm] < 0.15)
+stopifnot(met.tab[met.tmp, fdr.tm][2] < 0.15)
+stopifnot(met.tab[met.tmp, bmi.fdr.tm][2:3] < 0.15)
 stopifnot(met.tab[met.tmp, lfc.tm] > 0)
+stopifnot(met.tab[met.tmp, bmi.lfc.tm] > 0)
 met.tmp <- rownames(met.tab)[met.tab$BIOCHEMICAL == "metformin"]
-stopifnot(met.tab[met.tmp, fdr.tm] < 0.15)
-stopifnot(met.tab[met.tmp, bmi.fdr.tm] < 0.15)
+stopifnot(met.tab[met.tmp, fdr.tm][2] < 0.15)
+stopifnot(met.tab[met.tmp, bmi.fdr.tm][2] < 0.15)
 stopifnot(met.tab[met.tmp, lfc.tm] < 0)
+stopifnot(met.tab[met.tmp, bmi.lfc.tm] < 0)
+met.tmp <- rownames(met.tab)[met.tab$BIOCHEMICAL == "choline"]
+stopifnot(met.tab[met.tmp, fdr.tm] < 0.15)
+stopifnot(met.tab[met.tmp, bmi.fdr.tm][1] < 0.15)
+stopifnot(met.tab[met.tmp, lfc.tm] < 0)
+stopifnot(met.tab[met.tmp, bmi.lfc.tm] < 0)
+met.tmp <- rownames(met.tab)[met.tab$BIOCHEMICAL == "histidine"]
+stopifnot(met.tab[met.tmp, fdr.tm][1] < 0.15)
+stopifnot(met.tab[met.tmp, bmi.fdr.tm][1] < 0.15)
+stopifnot(met.tab[met.tmp, lfc.tm][1] < 0)
+stopifnot(met.tab[met.tmp, bmi.lfc.tm][1] < 0)
+met.tmp <- rownames(met.tab)[met.tab$BIOCHEMICAL == "retinol (Vitamin A)"]
+stopifnot(met.tab[met.tmp, fdr.tm][1] < 0.15)
+stopifnot(met.tab[met.tmp, bmi.fdr.tm][1] < 0.15)
+stopifnot(met.tab[met.tmp, lfc.tm] < 0)
+stopifnot(met.tab[met.tmp, bmi.lfc.tm] < 0)
 
 #from causal plot
 dm <- diff.soma.mat["SL006694", grep("_3$", colnames(diff.soma.mat))]
