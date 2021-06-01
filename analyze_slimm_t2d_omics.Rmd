@@ -828,6 +828,15 @@ We find caffeine metabolism significant.
 
 `r kable(cam.dins[1:3,])`
 
+# Correlation matrix for high-throughput simulation
+
+```{r soma_cor_mat}
+ngene <- 500
+set.seed(seed=0)
+cor.mat <- cor(t(soma.mat[sample(x=nrow(soma.mat), size = ngene),]))
+write.csv(signif(cor.mat, digits=6), "data/soma_cor_mat_subset.csv")
+```
+
 # Session info
 
 ```{r sessioninfo, include=TRUE}
