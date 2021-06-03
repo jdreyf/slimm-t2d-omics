@@ -16,7 +16,7 @@ library(MASS)
 setwd("validation")
 ```
 
-We validate our methods similarly to Barfied et al. (2017) except we simulate omics datasets with hundreds of genes whose significance is assessed with the false discovery rate (FDR) rather than with p-values.
+We validate our methods similarly to Barfied et al. (2017) except we simulate omics datasets with hundreds of analytes or genes whose significance is assessed with the false discovery rate (FDR) rather than with p-values.
 
 ```{r params}
 nsim <- 10**3
