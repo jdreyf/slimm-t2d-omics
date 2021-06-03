@@ -1,0 +1,112 @@
+---
+title: "Validation with omics data"
+date: "`r Sys.Date()`"
+output: word_document
+---
+
+It is assumed that `analyze_slimm_t2d_omics.Rmd` was already run, so `ezlimma` and `Hitman` have been installed. Then, installation time is under one minute. This code was all run on a desktop.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, include=FALSE)
+options(digits=3, stringsAsFactors=FALSE)
+library(ezlimma)
+library(Hitman)
+library(MASS)
+
+setwd("validation")
+```
+
+We validate our methods similarly to Barfied et al. (2017) except we simulate omics datasets with hundreds of genes whose significance is assessed with the false discovery rate (FDR) rather than with p-values.
+
+```{r params}
+nsim <- 10**3
+nsamp.v <- c(15, 50)
+t1 <- 100
+fdr <- 0.15
+ngene <- 500
+prop.v <- c(1, 5, 25)/ngene # vector of proportions of mediators
+
+corr_mat <- as.matrix(read.csv("../data/soma_cor_mat_subset.csv", row.names = 1))
+```
+
+
+## Simulate scenerios
+
+
+Scenario 1: Genes are independent and mediators are consistent
+
+Scenario 2: Genes are dependent and mediators are consistent
+
+Scenario 3: Genes are dependent and there are both consistent and inconsistent mediators
+
+```{r sim, eval=FALSE}
+for (nsamp in nsamp.v){
+  for (prop in prop.v){
+    sc1 <- Hitman:::sim_omics(nsamp=nsamp, ngene=ngene, FDR=fdr, prop.consistent=prop, b1t2 = 1, t1=t1, nsim=nsim)
+    write.csv(sc1, paste0("sim_omics_sc1_nsim", nsim,  "_prop", prop, "_t1.", t1, "_ngene", ngene, "_N", nsamp, ".csv"))
+  
+    sc2 <- Hitman:::sim_omics(nsamp=nsamp, ngene=ngene, FDR=fdr, prop.consistent=prop,
+                                 b1t2 = 1, t1=t1, nsim=nsim, Sigma = corr_mat)
+    write.csv(sc2, paste0("sim_omics_sc2_nsim", nsim, "_prop", prop, "_t1.", t1, "_ngene", ngene, "_N", nsamp,  ".csv"))
+    
+    sc3 <- Hitman:::sim_omics(nsamp=nsamp, ngene=ngene, FDR=fdr, prop.consistent=prop, prop.inconsistent = prop,
+                                 b1t2 = 1, t1=t1, nsim=nsim, Sigma = corr_mat)
+    write.csv(sc3, paste0("sim_omics_sc3_nsim", nsim, "_prop", prop, "_t1.", t1, "_ngene", ngene, "_N", nsamp,  ".csv"))
+  }
+}
+```
+
+
+## Compile tables
+
+
+Compile output from our simulations into one table per scenario.
+
+```{r collect}
+sc1 <- sc2 <- data.frame(Method=rep(c("Hitman", "Lotman", "Joint signif"), each=6), N=rep(nsamp.v, each=3), 
+                         prop=rep(prop.v, times=2), N_mediators=ngene*rep(prop.v, times=2), N_signif=NA, Power=NA, FDR=NA)
+
+sc3 <- data.frame(Method=rep(c("Hitman", "Lotman", "Joint signif consistent", "Joint signif both"), each=6), 
+                  N=rep(nsamp.v, each=3), prop=rep(prop.v, times=2), N_cons_med=ngene*rep(prop.v, times=2),
+                  N_incons_med=ngene*rep(prop.v, times=2), N_signif=NA, Power=NA, FDR=NA)
+
+for (nsamp in nsamp.v){
+  for (prop in prop.v){
+    sc1.tmp <- read.csv(paste0("sim_omics_sc1_nsim", nsim,  "_prop", prop, "_t1.", t1, "_ngene", ngene, 
+                               "_N", nsamp, ".csv"))
+    sc1.rnames <- rownames(sc1)[sc1$N == nsamp & sc1$prop == prop]
+    sc1[sc1.rnames, 5:7] <- sc1.tmp[, c("n.hits", "power", "fdr")]
+  
+    sc2.tmp <- read.csv(paste0("sim_omics_sc2_nsim", nsim,  "_prop", prop, "_t1.", t1, "_ngene", ngene, 
+                               "_N", nsamp, ".csv"))
+    sc2.rnames <- rownames(sc2)[sc2$N == nsamp & sc2$prop == prop]
+    sc2[sc2.rnames, 5:7] <- sc2.tmp[, c("n.hits", "power", "fdr")]
+    
+    sc3.tmp <- read.csv(paste0("sim_omics_sc3_nsim", nsim,  "_prop", prop, "_t1.", t1, "_ngene", ngene, 
+                               "_N", nsamp, ".csv"))
+    sc3.rnames <- rownames(sc3)[sc3$N == nsamp & sc3$prop == prop]
+    sc3[sc3.rnames, 6:8] <- sc3.tmp[, c("n.hits", "power", "fdr")]
+  }
+}
+```
+
+Write out a table per scenario.
+
+```{r write}
+sc1.wr <- sc1[order(sc1$N, sc1$N_mediators), setdiff(colnames(sc1), "prop")]
+write.csv(sc1.wr, "combined_sc1_sim_omics.csv", row.names = FALSE)
+
+sc2.wr <- sc2[order(sc2$N, sc2$N_mediators), setdiff(colnames(sc2), "prop")]
+write.csv(sc2.wr, "combined_sc2_sim_omics.csv", row.names = FALSE)
+
+sc3.wr <- sc3[order(sc3$N, sc3$N_cons_med), setdiff(colnames(sc3), "prop")]
+write.csv(sc3.wr, "combined_sc3_sim_omics.csv", row.names = FALSE)
+```
+
+```{r check}
+stopifnot(sc1[sc1$Method == "Hitman" & sc1$N == 50 & sc1$N_mediators == 25, "Power"] == 0.00088)
+```
+
+
+# References
+Barfield R, Shen J, Just AC, Vokonas PS, Schwartz J, Baccarelli AA, VanderWeele TJ, Lin X. Testing for the indirect effect under the null for genome-wide mediation analyses. Genet Epidemiol. 2017 Dec;41(8):824-833.

@@ -1,5 +1,5 @@
 ---
-title: "Validations by simulation"
+title: "Validation with simulations following Barfield et al."
 date: "`r Sys.Date()`"
 output: word_document
 ---
