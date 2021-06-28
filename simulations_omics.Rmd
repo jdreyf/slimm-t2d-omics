@@ -14,7 +14,7 @@ library(Hitman)
 
 ```{bash}
 set DISPLAY=
-ssh ...
+# ssh ...
 srun -c 27 -p priority --pty -t 2-0 /bin/bash 
 module load R
 R
