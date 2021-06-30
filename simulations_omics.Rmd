@@ -9,7 +9,6 @@ It is assumed that `analyze_slimm_t2d_omics.Rmd` was already run, so `ezlimma` a
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, include=FALSE)
 options(digits=3, stringsAsFactors=FALSE)
-library(Hitman)
 ```
 
 ```{bash}
@@ -25,16 +24,17 @@ We validate our methods similarly to Barfied et al. (2017) except we simulate om
 ```{r params}
 setwd("/n/jobspace/bbcore/slimm-t2d-omics/validation")
 
-nsim <- 10**3
+nsim <- 10**4
 nsamp.v <- c(15, 50, 500)
-t1 <- 25
 fdr <- 0.15
 ngene <- 500
-prop.v <- 1:3/ngene
+prop.v <- c(1, 5, 25)/ngene
 sc.v <- paste0("sc", 1:3)
 b1t2 <- 1
 # with prop.1c<=20% I see almost no messages that E not assoc w/ Y
-prop.1c <- 20/ngene
+prop.1c <- 0
+
+t1.nm <- "5x"
 
 cov.type <- "real"
 if (cov.type == "structured"){
@@ -61,6 +61,10 @@ Scenario 2: Genes are dependent and mediators are consistent
 Scenario 3: Genes are dependent and there are both consistent and inconsistent mediators
 
 ```{r sim, eval=FALSE}
+# library(remotes)
+# remotes::install_github("jdreyf/Hitman")
+library(Hitman)
+
 library(foreach)
 library(doParallel)
 
@@ -70,21 +74,25 @@ res <- foreach(nsamp = nsamp.v) %:%
   foreach(prop = prop.v) %:%
     foreach(sc = sc.v, .packages='Hitman') %dopar% {
       if (sc=="sc1"){
-        sc1 <- Hitman:::sim_omics(nsamp=nsamp, ngene=ngene, FDR=fdr, prop.consistent=prop, b1t2 = b1t2, t1=t1, nsim=nsim,
+        t1 <- 5*prop*ngene
+        sc1 <- Hitman::sim_omics(nsamp=nsamp, ngene=ngene, FDR=fdr, prop.consistent=prop, b1t2 = b1t2, t1=t1, nsim=nsim,
                                   Sigma = Sigma.sc1, prop.1c = prop.1c)
-        write.csv(sc1, paste0("sim_omics_sc1_nsim", nsim,  "_prop", prop, "_t1.", t1, "_ngene", ngene, "_N", nsamp, 
+        write.csv(sc1, paste0("sim_omics_sc1_nsim", nsim,  "_prop", prop, "_t1.", t1.nm, "_ngene", ngene, "_N", nsamp, 
                               "_prop1c", prop.1c, "_cov", cov.type.out, ".csv"))
         sc1
       } else if (sc=="sc2"){
-        sc2 <- Hitman:::sim_omics(nsamp=nsamp, ngene=ngene, FDR=fdr, prop.consistent=prop, b1t2 = b1t2, t1=t1, nsim=nsim, 
+        t1 <- 5*prop*ngene
+        sc2 <- Hitman::sim_omics(nsamp=nsamp, ngene=ngene, FDR=fdr, prop.consistent=prop, b1t2 = b1t2, t1=t1, nsim=nsim, 
                                   Sigma = cov_mat, prop.1c = prop.1c)
-        write.csv(sc2, paste0("sim_omics_sc2_nsim", nsim, "_prop", prop, "_t1.", t1, "_ngene", ngene, "_N", nsamp,  
+        write.csv(sc2, paste0("sim_omics_sc2_nsim", nsim, "_prop", prop, "_t1.", t1.nm, "_ngene", ngene, "_N", nsamp,  
                               "_prop1c", prop.1c, "_cov", cov.type.out, ".csv"))
         sc2
       } else if (sc=="sc3"){
-        sc3 <- Hitman:::sim_omics(nsamp=nsamp, ngene=ngene, FDR=fdr, prop.consistent=prop, prop.inconsistent = prop,
+        t1 <- 10*prop*ngene
+        prop2 <- ceiling(prop*ngene/2)/ngene
+        sc3 <- Hitman::sim_omics(nsamp=nsamp, ngene=ngene, FDR=fdr, prop.consistent=prop, prop.inconsistent = prop2,
                                        b1t2 = b1t2, t1=t1, nsim=nsim, Sigma = cov_mat, prop.1c = prop.1c)
-        write.csv(sc3, paste0("sim_omics_sc3_nsim", nsim, "_prop", prop, "_t1.", t1, "_ngene", ngene, "_N", nsamp,  
+        write.csv(sc3, paste0("sim_omics_sc3_nsim", nsim, "_prop", prop, "_t1.", t1.nm, "_ngene", ngene, "_N", nsamp,  
                               "_prop1c", prop.1c, "_cov", cov.type.out, ".csv"))
         sc3
       }
@@ -106,22 +114,23 @@ sc1 <- sc2 <- data.frame(Method=rep(c("Hitman", "Lotman", "Joint signif"), each=
 
 sc3 <- data.frame(Method=rep(c("Hitman", "Lotman", "Joint signif consistent", "Joint signif both"), each=length(prop.v)*length(nsamp.v)), 
                   N=rep(nsamp.v, each=length(prop.v)), prop=rep(prop.v, times=length(nsamp.v)), 
-                  N_cons_med=ngene*rep(prop.v, times=length(nsamp.v)), N_incons_med=ngene*rep(prop.v, times=length(nsamp.v)),
+                  N_cons_med=ngene*rep(prop.v, times=length(nsamp.v)), 
+                  N_incons_med=rep(ceiling(prop.v*ngene/2), times=length(nsamp.v)),
                   N_signif=NA, Power=NA, FDR=NA)
 
 for (nsamp in nsamp.v){
   for (prop in prop.v){
-    sc1.tmp <- read.csv(paste0("sim_omics_sc1_nsim", nsim,  "_prop", prop, "_t1.", t1, "_ngene", ngene, 
+    sc1.tmp <- read.csv(paste0("sim_omics_sc1_nsim", nsim,  "_prop", prop, "_t1.", t1.nm, "_ngene", ngene, 
                                "_N", nsamp, "_prop1c", prop.1c, "_cov", cov.type.out, ".csv"))
     sc1.rnames <- rownames(sc1)[sc1$N == nsamp & sc1$prop == prop]
     sc1[sc1.rnames, 5:7] <- sc1.tmp[, c("n.hits", "power", "fdr")]
   
-    sc2.tmp <- read.csv(paste0("sim_omics_sc2_nsim", nsim,  "_prop", prop, "_t1.", t1, "_ngene", ngene, 
+    sc2.tmp <- read.csv(paste0("sim_omics_sc2_nsim", nsim,  "_prop", prop, "_t1.", t1.nm, "_ngene", ngene, 
                                "_N", nsamp, "_prop1c", prop.1c, "_cov", cov.type.out, ".csv"))
     sc2.rnames <- rownames(sc2)[sc2$N == nsamp & sc2$prop == prop]
     sc2[sc2.rnames, 5:7] <- sc2.tmp[, c("n.hits", "power", "fdr")]
     
-    sc3.tmp <- read.csv(paste0("sim_omics_sc3_nsim", nsim,  "_prop", prop, "_t1.", t1, "_ngene", ngene, 
+    sc3.tmp <- read.csv(paste0("sim_omics_sc3_nsim", nsim,  "_prop", prop, "_t1.", t1.nm, "_ngene", ngene, 
                                "_N", nsamp, "_prop1c", prop.1c, "_cov", cov.type.out, ".csv"))
     sc3.rnames <- rownames(sc3)[sc3$N == nsamp & sc3$prop == prop]
     sc3[sc3.rnames, 6:8] <- sc3.tmp[, c("n.hits", "power", "fdr")]
