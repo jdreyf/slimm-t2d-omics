@@ -24,29 +24,40 @@ We validate our methods similarly to Barfied et al. (2017) except we simulate om
 ```{r params}
 setwd("/n/jobspace/bbcore/slimm-t2d-omics/validation")
 
+# library(remotes)
+# remotes::install_github("jdreyf/Hitman")
+# BiocManager::install("simPATHy")
+library(Hitman)
+library(simPATHy)
+
 nsim <- 10**4
 nsamp.v <- c(15, 50, 500)
 fdr <- 0.15
 ngene <- 500
 prop.v <- c(1, 5, 25)/ngene
 sc.v <- paste0("sc", 1:3)
-b1t2 <- 1
+b1t2 <- 0.14
 # with prop.1c<=20% I see almost no messages that E not assoc w/ Y
 prop.1c <- 0
 
 t1.nm <- "5x"
 
-cov.type <- "real"
+cov.type <- "CH" # CH for simPATHy::chimera
 if (cov.type == "structured"){
   cov_mat <- matrix(0.3, nrow=ngene, ncol=ngene)
   diag(cov_mat) <- 1
   Sigma.sc1 <- diag(ngene)
   cov.type.out <- "Str"
 } else {
-  cov_mat <- as.matrix(read.csv("../data/soma_cov_mat_subset_scaled.csv", row.names = 1))
+  dataCH <- simPATHy::chimera
+  set.seed <- 0
+  gene.ind <- sample(x=1:nrow(dataCH), size=ngene)
+  sampledata <- t(dataCH[gene.ind,])
+  Sigma <- cov(sampledata)
+  cov_mat <- Sigma/median(diag(Sigma))
   Sigma.sc1 <- matrix(0, nrow=nrow(cov_mat), ncol=ncol(cov_mat))
   diag(Sigma.sc1) <- diag(cov_mat)
-  cov.type.out <- "Re"
+  cov.type.out <- "CH"
 }
 ```
 
@@ -61,10 +72,6 @@ Scenario 2: Genes are dependent and mediators are consistent
 Scenario 3: Genes are dependent and there are both consistent and inconsistent mediators
 
 ```{r sim, eval=FALSE}
-# library(remotes)
-# remotes::install_github("jdreyf/Hitman")
-library(Hitman)
-
 library(foreach)
 library(doParallel)
 

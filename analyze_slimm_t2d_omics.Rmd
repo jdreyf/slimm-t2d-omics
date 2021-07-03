@@ -125,7 +125,7 @@ write.csv(diff.clin, "results/clin_metadata_diff.csv", na="")
 ```
 
 
-```{r, diff.pheno2}
+```{r diff.pheno2}
 diff.pheno <- data.frame(diff.pheno, arm=pheno[rownames(diff.pheno), c("arm")], grp=pheno[rownames(diff.pheno), c("grp")],
                          check.names = FALSE)
 diff.pheno3 <- diff.pheno[grep("_3$", rownames(diff.pheno)),]
@@ -832,12 +832,12 @@ We find caffeine metabolism significant.
 
 ```{r soma_cor_mat}
 ngene <- 500
-set.seed(seed=0)
+set.seed(seed=1)
 gene.ind <- sample(x=nrow(soma.mat), size = ngene)
-cor.mat <- cor(t(soma.mat[gene.ind, grep("_0", colnames(soma.mat), value = TRUE)]))
-write.csv(signif(cor.mat, digits=6), "data/soma_cor_mat_subset.csv")
-
-cov.mat <- cov(t(soma.mat[gene.ind, grep("_0", colnames(soma.mat), value = TRUE)]))
+dsoma3 <- diff.soma.mat[gene.ind, grep(pattern="_3$", x = colnames(diff.soma.mat))]
+dsoma3b <- removeBatchEffect(x=dsoma3, batch=diff.pheno3[colnames(dsoma3), "arm"])
+cov.mat <- cov(t(dsoma3b))
+# write.csv(signif(cov.mat, digits=6), "data/soma_cov_mat_subset.csv")
 # median(diag(cov.mat)) #0.163
 # mean(sqrt(sqrt(diag(cov.mat)))) #0.65**4 = 0.18
 cov.mat.sc <- cov.mat/median(diag(cov.mat))
