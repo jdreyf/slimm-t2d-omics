@@ -828,22 +828,6 @@ We find caffeine metabolism significant.
 
 `r kable(cam.dins[1:3,])`
 
-# Dependence matrix for high-throughput simulation
-
-```{r soma_cor_mat}
-ngene <- 500
-set.seed(seed=1)
-gene.ind <- sample(x=nrow(soma.mat), size = ngene)
-dsoma3 <- diff.soma.mat[gene.ind, grep(pattern="_3$", x = colnames(diff.soma.mat))]
-dsoma3b <- removeBatchEffect(x=dsoma3, batch=diff.pheno3[colnames(dsoma3), "arm"])
-cov.mat <- cov(t(dsoma3b))
-# write.csv(signif(cov.mat, digits=6), "data/soma_cov_mat_subset.csv")
-# median(diag(cov.mat)) #0.163
-# mean(sqrt(sqrt(diag(cov.mat)))) #0.65**4 = 0.18
-cov.mat.sc <- cov.mat/median(diag(cov.mat))
-write.csv(signif(cov.mat.sc, digits=6), "data/soma_cov_mat_subset_scaled.csv")
-```
-
 # Session info
 
 ```{r sessioninfo, include=TRUE}

@@ -9,12 +9,14 @@
 #' @format A matrix with >1 million rows and 2 columns, representing: physical_entity_id1 & physical_entity_id2.
 #' @source \url{http://www.pathwaycommons.org/archives/PC2/v9/PathwayCommons9.All.hgnc.sif.gz}
 
+# install.packages("remotes")
+# remotes::install_github("jdreyf/ezlimmaplot")
+library(ezlimmaplot)
 library(devtools)
-library(PANTS)
 
 pc9 <- read.table('B:/annotations/pwy_commons/PathwayCommons9.All.hgnc.sif')
 # remove water
-pc9 <- sif2edgelist(pc9, rm.ids="CHEBI:15377")
+pc9 <- ezlimmaplot::sif2edgelist(pc9, rm.ids="CHEBI:15377")
 
 stopifnot(ncol(pc9) == 2)
 stopifnot(!apply(pc9, 1, FUN=is.unsorted))
