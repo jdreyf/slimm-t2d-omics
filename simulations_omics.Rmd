@@ -14,7 +14,7 @@ options(digits=3, stringsAsFactors=FALSE)
 ```{bash}
 set DISPLAY=
 # ssh ...
-srun -c 27 -p priority --pty -t 2-0 /bin/bash 
+srun -c 27 -p priority --pty -t 1-0 /bin/bash 
 module load R
 R
 ```
@@ -36,12 +36,12 @@ prop.v <- c(1, 5, 25)/ngene
 sc.v <- paste0("sc", 1:3)
 b1 <- t2 <- 2
 # with prop.1c<=20% I see almost no messages that E not assoc w/ Y
-prop.1c <- 0
+prop.em <- 0.4
 sd.mn <- 0
 
 t1.nm <- "5x"
 
-cov.type <- "gtex" # CH for simPATHy::chimera
+cov.type <- "gtex"
 if (cov.type == "structured"){
   cov_mat <- matrix(0.3, nrow=ngene, ncol=ngene)
   diag(cov_mat) <- 1
@@ -77,24 +77,24 @@ res <- foreach(nsamp = nsamp.v) %:%
       if (sc=="sc1"){
         t1 <- 5*prop*ngene*b1
         sc1 <- Hitman::sim_omics(nsamp=nsamp, ngene=ngene, FDR=fdr, prop.consistent=prop, b1 = b1, t2=t2, t1=t1, nsim=nsim,
-                                  Sigma = Sigma.sc1, prop.1c = prop.1c)
+                                  Sigma = Sigma.sc1, prop.em = prop.em)
         write.csv(sc1, paste0("sim_omics_sc1_nsim", nsim,  "_prop", prop, "_t1.", t1.nm, "_ngene", ngene, "_N", nsamp, 
-                              "_b1t2", b1, "_cov", cov.type.out, ".csv"))
+                              "_b1t2", b1, "_propem", prop.em, "_cov", cov.type.out, ".csv"))
         sc1
       } else if (sc=="sc2"){
         t1 <- 5*prop*ngene*b1
         sc2 <- Hitman::sim_omics(nsamp=nsamp, ngene=ngene, FDR=fdr, prop.consistent=prop, b1 = b1, t2=t2, t1=t1, nsim=nsim, 
-                                  Sigma = cov_mat, prop.1c = prop.1c)
+                                  Sigma = cov_mat, prop.em = prop.em)
         write.csv(sc2, paste0("sim_omics_sc2_nsim", nsim, "_prop", prop, "_t1.", t1.nm, "_ngene", ngene, "_N", nsamp,  
-                              "_b1t2", b1, "_cov", cov.type.out, ".csv"))
+                              "_b1t2", b1, "_propem", prop.em, "_cov", cov.type.out, ".csv"))
         sc2
       } else if (sc=="sc3"){
         t1 <- 10*prop*ngene*b1
         # prop2 <- ceiling(prop*ngene/2)/ngene
         sc3 <- Hitman::sim_omics(nsamp=nsamp, ngene=ngene, FDR=fdr, prop.consistent=prop, prop.inconsistent = prop,
-                                       b1 = b1, t2=t2, t1=t1, nsim=nsim, Sigma = cov_mat, prop.1c = prop.1c)
+                                       b1 = b1, t2=t2, t1=t1, nsim=nsim, Sigma = cov_mat, prop.em = prop.em)
         write.csv(sc3, paste0("sim_omics_sc3_nsim", nsim, "_prop", prop, "_t1.", t1.nm, "_ngene", ngene, "_N", nsamp,  
-                              "_b1t2", b1, "_cov", cov.type.out, ".csv"))
+                              "_b1t2", b1, "_propem", prop.em, "_cov", cov.type.out, ".csv"))
         sc3
       }
     }
@@ -123,17 +123,17 @@ sc3 <- data.frame(Method=rep(c("Hitman", "Lotman", "Joint signif consistent", "J
 for (nsamp in nsamp.v){
   for (prop in prop.v){
     sc1.tmp <- read.csv(paste0("sim_omics_sc1_nsim", nsim,  "_prop", prop, "_t1.", t1.nm, "_ngene", ngene, 
-                               "_N", nsamp, "_b1t2", b1, "_cov", cov.type.out, ".csv"))
+                               "_N", nsamp, "_b1t2", b1, "_propem", prop.em, "_cov", cov.type.out, ".csv"))
     sc1.rnames <- rownames(sc1)[sc1$N == nsamp & sc1$prop == prop]
     sc1[sc1.rnames, 5:7] <- sc1.tmp[, c("n.hits", "power", "fdr")]
   
     sc2.tmp <- read.csv(paste0("sim_omics_sc2_nsim", nsim,  "_prop", prop, "_t1.", t1.nm, "_ngene", ngene, 
-                               "_N", nsamp, "_b1t2", b1, "_cov", cov.type.out, ".csv"))
+                               "_N", nsamp, "_b1t2", b1, "_propem", prop.em, "_cov", cov.type.out, ".csv"))
     sc2.rnames <- rownames(sc2)[sc2$N == nsamp & sc2$prop == prop]
     sc2[sc2.rnames, 5:7] <- sc2.tmp[, c("n.hits", "power", "fdr")]
     
     sc3.tmp <- read.csv(paste0("sim_omics_sc3_nsim", nsim,  "_prop", prop, "_t1.", t1.nm, "_ngene", ngene, 
-                               "_N", nsamp, "_b1t2", b1, "_cov", cov.type.out, ".csv"))
+                               "_N", nsamp, "_b1t2", b1, "_propem", prop.em, "_cov", cov.type.out, ".csv"))
     sc3.rnames <- rownames(sc3)[sc3$N == nsamp & sc3$prop == prop]
     sc3[sc3.rnames, 6:8] <- sc3.tmp[, c("n.hits", "power", "fdr")]
   }
@@ -144,19 +144,14 @@ Write out a table per scenario.
 
 ```{r write}
 sc1.wr <- sc1[order(sc1$N, sc1$N_mediators), setdiff(colnames(sc1), "prop")]
-write.csv(sc1.wr, paste0("combined_sc1_omics_nsim", nsim, "_b1t2", b1, "_cov", cov.type.out, ".csv"), row.names = FALSE)
+write.csv(sc1.wr, paste0("combined_sc1_omics_nsim", nsim, "_b1t2", b1, "_propem", prop.em, "_cov", cov.type.out, ".csv"), row.names = FALSE)
 
 sc2.wr <- sc2[order(sc2$N, sc2$N_mediators), setdiff(colnames(sc2), "prop")]
-write.csv(sc2.wr, paste0("combined_sc2_omics_nsim", nsim, "_b1t2", b1, "_cov", cov.type.out, ".csv"), row.names = FALSE)
+write.csv(sc2.wr, paste0("combined_sc2_omics_nsim", nsim, "_b1t2", b1, "_propem", prop.em, "_cov", cov.type.out, ".csv"), row.names = FALSE)
 
 sc3.wr <- sc3[order(sc3$N, sc3$N_cons_med), setdiff(colnames(sc3), "prop")]
-write.csv(sc3.wr, paste0("combined_sc3_omics_nsim", nsim, "_b1t2", b1, "_cov", cov.type.out, ".csv"), row.names = FALSE)
+write.csv(sc3.wr, paste0("combined_sc3_omics_nsim", nsim, "_b1t2", b1, "_propem", prop.em, "_cov", cov.type.out, ".csv"), row.names = FALSE)
 ```
-
-```{r check}
-# stopifnot(sc1[sc1$Method == "Hitman" & sc1$N == 50 & sc1$N_mediators == 25, "Power"] == 0.00088)
-```
-
 
 # References
 Barfield R, Shen J, Just AC, Vokonas PS, Schwartz J, Baccarelli AA, VanderWeele TJ, Lin X. Testing for the indirect effect under the null for genome-wide mediation analyses. Genet Epidemiol. 2017 Dec;41(8):824-833.
