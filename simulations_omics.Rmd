@@ -29,7 +29,7 @@ setwd("/n/jobspace/bbcore/slimm-t2d-omics/validation")
 library(Hitman)
 
 nsim <- 10**3
-nsamp.v <- c(15, 50, 500)
+nsamp.v <- c(15, 50)
 fdr <- 0.15
 ngene <- 500
 prop.v <- c(1, 5, 25)/ngene

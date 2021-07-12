@@ -1013,7 +1013,7 @@ stopifnot(cor(as.numeric(met.mat["C35127",]), as.numeric(met.mat.na["C35127",]))
 ```
 
 Explore missingness
-```{r, eval=FALSE}
+```{r explore_missing, eval=FALSE}
 nna <- rowMeans(is.na(met.mat.na))
 nna.df <- data.frame(RYGBvsDWMat3mo.p=met.tab.na[, "RYGBvsDWMat3mo.p"], prop.na=nna[rownames(met.tab.na)], met.annot[rownames(met.tab.na),])
 nna.df <- nna.df[order(nna.df$RYGBvsDWMat3mo.p),]

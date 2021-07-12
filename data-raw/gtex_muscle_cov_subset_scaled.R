@@ -17,8 +17,11 @@
 options(stringsAsFactors=FALSE)
 
 library(AnnotationDbi)
+library(edgeR)
+library(limma)
 library(org.Hs.eg.db)
 library(readr)
+library(sva)
 
 # counts
 counts <- readr::read_tsv("GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_reads.gct", skip = 2)
@@ -90,6 +93,7 @@ mat2p <- limma::removeBatchEffect(y$E, covariates = des[, -1])
 
 # write
 set.seed(1)
+# randomly sample 500 genes
 gene.ind <- sample(x=1:nrow(mat2p), size = 500)
 cov.mat <- cov(t(mat2p[gene.ind,]))
 cov.mat.sc <- cov.mat/median(diag(cov.mat))
