@@ -119,14 +119,14 @@ med <- melt_sim_tab(read.csv("validation/sim_mediate_nsamp50_nsim1000_nperm1000_
 rownames(med) <- paste0(med[, 1], med[, 2])
 
 stopifnot(rownames(hit)==rownames(med), rownames(hit)==rownames(js))
-comb.df <- data.frame(hit, 
+comb50.df <- data.frame(hit, 
                       lot[, -(1:2), drop=FALSE],
                       js[, -(1:2), drop=FALSE], 
                       med[, -(1:2), drop=FALSE])
-comb.mat <- data.matrix(sapply(comb.df, as.numeric))
-comb.mat <- comb.mat[order(-rowSums(comb.mat[, 1:2]==0), rowSums(comb.mat[, 1:2])), ]
+comb50.mat <- data.matrix(sapply(comb50.df, as.numeric))
+comb50.mat <- comb.mat[order(-rowSums(comb.mat50[, 1:2]==0), rowSums(comb.mat50[, 1:2])), ]
 # write_xlsx(x=as.data.frame(comb.mat), "validation/combined_n50_sim_tab.xlsx")
-write.csv(x = comb.mat, file = "validation/combined_n50_sim_tab.csv", row.names = FALSE)
+write.csv(x = comb50.mat, file = "validation/combined_n50_sim_tab.csv", row.names = FALSE)
 ```
 
 Compile tables for N=`r nsamp.small`.
@@ -145,23 +145,23 @@ med <- melt_sim_tab(read.csv("validation/sim_mediate_nsamp15_nsim1000_nperm1000_
 rownames(med) <- paste0(med[, 1], med[, 2])
 
 stopifnot(rownames(hit)==rownames(med), rownames(hit)==rownames(js))
-comb.df <- data.frame(hit, 
+comb15.df <- data.frame(hit, 
                       lot[, -(1:2), drop=FALSE],
                       js[, -(1:2), drop=FALSE], 
                       med[, -(1:2), drop=FALSE])
-comb.mat <- data.matrix(sapply(comb.df, as.numeric))
-comb.mat <- comb.mat[order(-rowSums(comb.mat[, 1:2]==0), rowSums(comb.mat[, 1:2])), ]
-write.csv(x = comb.mat, file = "validation/combined_n15_sim_tab.csv", row.names = FALSE)
+comb15.mat <- data.matrix(sapply(comb15.df, as.numeric))
+comb15.mat <- comb.mat[order(-rowSums(comb15.mat[, 1:2]==0), rowSums(comb15.mat[, 1:2])), ]
+write.csv(x = comb15.mat, file = "validation/combined_n15_sim_tab.csv", row.names = FALSE)
 ```
 
-Test significance of difference in power.
+Test significance of difference in power for N=50.
 
-```{r t.test, include=TRUE}
-hit.0.39.prop <- nsim*signif(as.numeric(data.frame(comb.mat) %>% filter(b1==0.39, t2==0.39) %>% select("Hitman")), 5)
-hit.0.14.prop <- nsim*signif(as.numeric(data.frame(comb.mat) %>% filter(b1==0.14, t2==0.14) %>% select("Hitman")), 5)
+```{r t.test.n50, include=TRUE}
+hit.0.39.prop <- nsim*signif(as.numeric(data.frame(comb50.mat) %>% filter(b1==0.39, t2==0.39) %>% select("Hitman")), 5)
+hit.0.14.prop <- nsim*signif(as.numeric(data.frame(comb50.mat) %>% filter(b1==0.14, t2==0.14) %>% select("Hitman")), 5)
 
-other.0.39.prop <- nsim*signif(as.numeric(data.frame(comb.mat) %>% filter(b1==0.39, t2==0.39) %>% select("mediate")), 5)
-other.0.14.prop <- nsim*signif(as.numeric(data.frame(comb.mat) %>% filter(b1==0.14, t2==0.14) %>% select("joint")), 5)
+other.0.39.prop <- nsim*signif(as.numeric(data.frame(comb50.mat) %>% filter(b1==0.39, t2==0.39) %>% select("mediate")), 5)
+other.0.14.prop <- nsim*signif(as.numeric(data.frame(comb50.mat) %>% filter(b1==0.14, t2==0.14) %>% select("joint")), 5)
 
 tt.39 <- t.test(x=rep(1:0, c(hit.0.39.prop, nsim-hit.0.39.prop)),
                 y=rep(1:0, nsim*c(other.0.39.prop, nsim-other.0.39.prop)),
@@ -173,6 +173,19 @@ tt.14 <- t.test(x=rep(1:0, c(hit.0.14.prop, nsim-hit.0.14.prop)),
                 var.equal = TRUE)
 print(tt.14)
 ```
+
+Test significance of difference in power for N=15.
+
+```{r t.test.n15, include=TRUE}
+hit.0.39.prop <- nsim*signif(as.numeric(data.frame(comb15.mat) %>% filter(b1==0.39, t2==0.39) %>% select("Hitman")), 5)
+lot.0.39.prop <- nsim*signif(as.numeric(data.frame(comb15.mat) %>% filter(b1==0.39, t2==0.39) %>% select("Lotman")), 5)
+
+tt.39 <- t.test(x=rep(1:0, c(hit.0.39.prop, nsim-hit.0.39.prop)),
+                y=rep(1:0, nsim*c(lot.0.39.prop, nsim-lot.0.39.prop)),
+                var.equal = TRUE)
+print(tt.39)
+```
+
 
 # References
 Barfield R, Shen J, Just AC, Vokonas PS, Schwartz J, Baccarelli AA, VanderWeele TJ, Lin X. Testing for the indirect effect under the null for genome-wide mediation analyses. Genet Epidemiol. 2017 Dec;41(8):824-833.

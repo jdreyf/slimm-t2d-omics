@@ -59,15 +59,15 @@ rownames(annot1) <- annot1$symbol
 annot <- cbind(annot, annot1[annot$symbol, -1]); rm(annot1)
 annot[is.na(annot)] <- ""
 
-# save(annot, counts, pheno, file = "data/gtex_v8_muscle_data.rda")
-# load("data/gtex_v8_muscle_data.rda")
+# save(annot, counts, pheno, file = "gtex_v8_muscle_data.rda")
+# load("gtex_v8_muscle_data.rda")
 
 x <- edgeR::DGEList(counts = counts)
 
 # remove duplicated genes
 expr_gene <- cbind(counts, annot[rownames(counts), "symbol", drop = FALSE])
 keep <- !duplicated(expr_gene)
-sum(!keep)
+# sum(!keep)
 x <- x[keep, ]
 rm(expr_gene)
 
